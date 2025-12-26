@@ -30,6 +30,22 @@ impl AffineTuple {
             translation: Vector::zeros(),
         }
     }
+    
+    /// 构造零元 (Zero Transformation)
+    /// 用于累加器的初始状态
+    pub fn zeros() -> Self {
+        // 创建全0矩阵和全0向量
+        let zero_vec = Vector::zeros();
+        let zero_mat = Matrix {
+            rows: zero_vec.data.len(),
+            cols: zero_vec.data.len(),
+            data: vec![0.0; zero_vec.data.len() * zero_vec.data.len()]
+        };
+        AffineTuple {
+            linear: zero_mat,
+            translation: zero_vec,
+        }
+    }
 
     /// 构造一个新的仿射元组
     pub fn new(linear: Matrix, translation: Vector) -> Self {
@@ -73,27 +89,40 @@ impl AffineTuple {
         })
     }
 
+    /// ➕ [Primitive]: Pure Addition (纯加法)
+    /// 用于构建 Monoid 结构。不包含平均逻辑。
+    /// Math: (W1+W2, b1+b2)
+    pub fn add_components(&self, other: &Self) -> Self {
+        let new_linear = self.linear.add(&other.linear);
+        let new_translation = self.translation.add(&other.translation);
+        
+        AffineTuple {
+            linear: new_linear,
+            translation: new_translation,
+        }
+    }
+    
+    /// 📏 [Primitive]: Scalar Scaling (标量缩放)
+    /// 用于归一化步骤。
+    pub fn scale(&self, factor: Float) -> Self {
+        AffineTuple {
+            linear: self.linear.scale(factor),
+            translation: self.translation.scale(factor),
+        }
+    }
+
     /// 🌌 [Space Operator]: Commutative Aggregation (空间聚合 - 交换)
     /// 
     /// 数学定义: $\mathcal{A}_1 \otimes \mathcal{A}_2$
     /// 物理含义: 融合两个独立的上下文分支 (Context Merging)。
     /// 
-    /// 算法:
-    /// * W_new = Normalize(W1 + W2)  (Or Average)
-    /// * b_new = Average(b1, b2)
+    /// ⚠️ 修正注记: 原先的实现直接取平均 (A+B)/2，这破坏了结合律。
+    /// 现在建议在 folding 层使用 Accumulator，这里仅作为传统的二元辅助函数保留，
+    /// 但底层逻辑已改为依赖 add_components。
     pub fn commutative_merge(&self, other: &Self) -> Result<Self, String> {
-        // W_new = (W1 + W2) * 0.5
-        let sum_linear = self.linear.add(&other.linear);
-        let new_linear = sum_linear.scale(0.5);
-
-        // b_new = (b1 + b2) * 0.5
-        let sum_translation = self.translation.add(&other.translation);
-        let new_translation = sum_translation.scale(0.5);
-
-        Ok(AffineTuple {
-            linear: new_linear,
-            translation: new_translation,
-        })
+        // 使用纯加法后缩放，逻辑上等价于 (A+B)/2
+        let sum = self.add_components(other);
+        Ok(sum.scale(0.5))
     }
     
     /// 🔧 Inverse Solver (代数逆解)
