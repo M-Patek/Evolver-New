@@ -1,4 +1,4 @@
-# White-Box Evolver: The Pure Logic Neural Architecture
+# Evolver: The Pure Logic Neural Architecture
 **(Hyper-Tensor Protocol for Transparent, Differentiable AI)**
 
 > "From Black-Box Probabilities to White-Box Algebraic Derivation."
