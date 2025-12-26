@@ -1,217 +1,157 @@
-
 // COPYRIGHT (C) 2025 M-Patek. ALL RIGHTS RESERVED.
 
-use std::collections::HashMap;
-use rug::Integer;
-use crate::phase3::core::affine::AffineTuple;
 use serde::{Serialize, Deserialize};
-use std::fs::File;
-use std::io::{BufReader, BufWriter};
-use rand::seq::SliceRandom; // 用于维度打乱测试
-use rand::thread_rng;
+use crate::core::affine::AffineTuple;
+use crate::core::algebra::Vector;
+use crate::topology::folding::HyperFolder;
+use crate::topology::merkle::CausalTrace;
 
-pub type Coordinate = Vec<usize>;
-
-/// 🌳 TimeSegmentTree: 微观历史树
-/// 负责单个张量单元内的时序聚合。
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TimeSegmentTree {
-    pub leaves: Vec<AffineTuple>,
-}
-
-impl TimeSegmentTree {
-    pub fn new() -> Self {
-        TimeSegmentTree { leaves: Vec::new() }
-    }
-
-    pub fn append(&mut self, tuple: AffineTuple) {
-        self.leaves.push(tuple);
-    }
-
-    pub fn root(&self, discriminant: &Integer) -> Result<AffineTuple, String> {
-        if self.leaves.is_empty() {
-            return Ok(AffineTuple::identity(discriminant));
-        }
-        self.build_tree_recursive(&self.leaves, discriminant)
-    }
-
-    fn build_tree_recursive(&self, nodes: &[AffineTuple], discriminant: &Integer) -> Result<AffineTuple, String> {
-        if nodes.len() == 0 {
-            return Ok(AffineTuple::identity(discriminant));
-        }
-        if nodes.len() == 1 {
-            return Ok(nodes[0].clone());
-        }
-
-        let mid = nodes.len() / 2;
-        let left = self.build_tree_recursive(&nodes[0..mid], discriminant)?;
-        let right = self.build_tree_recursive(&nodes[mid..], discriminant)?;
-
-        // [Non-Commutative]: Left ⊕ Right
-        // 时间演化必须严格遵守顺序：先左后右
-        left.compose(&right, discriminant)
-    }
-
-    /// 🛡️ [FALSIFIABILITY BOUNDARY A]: Witness Index Validation
-    /// 生成历史见证（Merkle-style Proof）时的严格边界检查。
-    pub fn generate_witness(&self, index: usize, discriminant: &Integer) -> Result<Vec<(AffineTuple, bool)>, String> {
-        // [CRITICAL CHECK]: 索引越界即“伪证”
-        // 如果请求的索引超出了当前记录的历史长度，说明该事件在物理时间上根本未发生。
-        // 系统必须直接返回 Error，拒绝生成任何虚构的见证路径。
-        if index >= self.leaves.len() {
-            return Err(format!("❌ Security Halt: Witness index {} out of bounds (History Length: {}). Evolution cannot be extrapolated.", index, self.leaves.len()));
-        }
-
-        let mut witness = Vec::new();
-        self.generate_witness_recursive(&self.leaves, index, 0, discriminant, &mut witness)?;
-        Ok(witness)
-    }
-
-    fn generate_witness_recursive(
-        &self, 
-        nodes: &[AffineTuple], 
-        target_abs_index: usize, 
-        current_offset: usize,
-        discriminant: &Integer,
-        witness: &mut Vec<(AffineTuple, bool)>
-    ) -> Result<AffineTuple, String> {
-        if nodes.len() == 1 {
-            return Ok(nodes[0].clone());
-        }
-
-        let mid = nodes.len() / 2;
-        let left_slice = &nodes[0..mid];
-        let right_slice = &nodes[mid..];
-
-        if target_abs_index < current_offset + mid {
-            // Target is in Left Subtree
-            let right_agg = self.build_tree_recursive(right_slice, discriminant)?;
-            // Witness is Right Sibling (false flag for direction)
-            witness.push((right_agg, false)); 
-            let left_agg = self.generate_witness_recursive(left_slice, target_abs_index, current_offset, discriminant, witness)?;
-            return left_agg.compose(&self.build_tree_recursive(right_slice, discriminant)?, discriminant);
-        } else {
-            // Target is in Right Subtree
-            let left_agg = self.build_tree_recursive(left_slice, discriminant)?;
-            // Witness is Left Sibling (true flag for direction)
-            witness.push((left_agg, true));
-            let right_agg = self.generate_witness_recursive(right_slice, target_abs_index, current_offset + mid, discriminant, witness)?;
-            return left_agg.compose(&right_agg, discriminant);
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
+/// 🧠 HyperTensor: 全息逻辑张量
+///
+/// 这是网络对一段输入序列 (Context Window) 的最终理解。
+/// 它既包含结果 (Root)，也包含过程 (Trace)。
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HyperTensor {
-    pub dimensions: usize,
-    pub side_length: usize,
-    pub discriminant: Integer,
-    
-    // Value 升级为 TimeSegmentTree 以支持时序证明
-    pub data: HashMap<Coordinate, TimeSegmentTree>,
-    
-    #[serde(skip)]
-    pub cached_root: Option<AffineTuple>, 
+    /// 📍 Global Root: 最终折叠出的逻辑状态
+    /// 代表了整段输入的 "语义总和"。
+    pub root: AffineTuple,
+
+    /// 🎞️ Causal Trace: 梯度磁带 (Optional)
+    /// 仅在训练模式下生成。记录了从 Leaf 到 Root 的所有计算步骤，
+    /// 用于反向传播 (Backpropagation) 或代数逆解。
+    pub trace: Option<CausalTrace>,
 }
 
 impl HyperTensor {
-    pub fn new(dim: usize, len: usize, discriminant: Integer) -> Self {
+    /// 🆕 Genesis: 创建一个空的 HyperTensor
+    pub fn identity() -> Self {
         HyperTensor {
-            dimensions: dim,
-            side_length: len,
-            discriminant,
-            data: HashMap::new(),
-            cached_root: None,
+            root: AffineTuple::identity(),
+            trace: None,
         }
     }
 
-    pub fn map_id_to_coord(&self, numeric_id: u64) -> Coordinate {
-        let mut coord = Vec::with_capacity(self.dimensions);
-        let mut temp = numeric_id;
-        let l = self.side_length as u64;
-        for _ in 0..self.dimensions {
-            coord.push((temp % l) as usize);
-            temp /= l;
+    /// 🚀 Forward Pass (构造函数)
+    ///
+    /// 将一串原始的 Token Embeddings 转换为全息张量。
+    ///
+    /// * `inputs`: 输入的仿射元组序列 (Leaf Nodes)。
+    /// * `training_mode`: 
+    ///     - `true`: 开启梯度追踪 (慢速，生成 Trace)。
+    ///     - `false`: 开启并行折叠 (极速，无 Trace)。
+    pub fn forward(inputs: &[AffineTuple], training_mode: bool) -> Self {
+        if inputs.is_empty() {
+            return Self::identity();
         }
-        coord
-    }
-    
-    pub fn map_id_to_coord_hash(&self, user_id: &str) -> Coordinate {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(user_id.as_bytes());
-        hasher.update(b":htp:coord:v2");
-        let hash_output = hasher.finalize();
-        
-        let mut coord = Vec::with_capacity(self.dimensions);
-        let reader = hash_output.as_bytes();
-        let l = self.side_length as u128;
-        
-        let mut val = u128::from_le_bytes(reader[0..16].try_into().unwrap());
-        
-        for _ in 0..self.dimensions {
-            coord.push((val % l) as usize);
-            val /= l;
-        }
-        coord
-    }
 
-    pub fn insert(&mut self, user_id: &str, new_tuple: AffineTuple) -> Result<(), String> {
-        let coord = self.map_id_to_coord_hash(user_id);
-        
-        self.data.entry(coord)
-            .or_insert_with(TimeSegmentTree::new)
-            .append(new_tuple);
-
-        self.cached_root = None;
-        Ok(())
-    }
-    
-    // ... [save_to_disk / load_from_disk Omitted for brevity] ...
-
-    pub fn get_segment_tree_path(&self, coord: &Coordinate, _axis: usize) -> Vec<AffineTuple> {
-        if let Some(tree) = self.data.get(coord) {
-            if let Ok(root) = tree.root(&self.discriminant) {
-                return vec![root];
-            }
-        }
-        vec![AffineTuple::identity(&self.discriminant)]
-    }
-    
-    /// 🛡️ [The Commutativity Limit Check]: 全息对称性验证
-    /// 
-    /// 这是 Evolver 的“判死刑”逻辑：
-    /// 如果 Fold(Axis_A -> Axis_B) != Fold(Axis_B -> Axis_A)，
-    /// 意味着空间算子混入了因果性（时间毒素），必须立即 Panic。
-    pub fn verify_holographic_symmetry(&self) -> Result<bool, String> {
-        // 1. Path A: 自然序 (Canonical Order)
-        let order_a: Vec<usize> = (0..self.dimensions).collect();
-        let root_a = self.compute_root_internal(&order_a)?;
-
-        // 2. Path B: 置换序 (Permuted Order)
-        let mut order_b = order_a.clone();
-        if self.dimensions >= 2 {
-            // 交换前两个维度做最严格的测试
-            order_b.swap(0, 1); 
+        if training_mode {
+            Self::fold_with_trace(inputs)
         } else {
-            return Ok(true);
+            Self::fold_fast(inputs)
+        }
+    }
+
+    /// 🏎️ Fast Folding (Inference Mode)
+    /// 利用 Rayon 进行并行规约，速度极快，但不保留梯度图。
+    fn fold_fast(inputs: &[AffineTuple]) -> Self {
+        // 调用我们之前在 folding.rs 写的并行算法
+        let root = HyperFolder::fold_timeline(inputs)
+            .unwrap_or_else(AffineTuple::identity);
+
+        HyperTensor {
+            root,
+            trace: None, // 推理模式不需要梯度
+        }
+    }
+
+    /// 🐢 Trace Folding (Training Mode)
+    /// 串行执行折叠 (或分层折叠)，并 meticulously 记录每一步到 CausalTrace。
+    /// 这样我们才能执行 backward()。
+    fn fold_with_trace(inputs: &[AffineTuple]) -> Self {
+        let mut trace = CausalTrace::new();
+        
+        // 1. Register Leaf Nodes
+        // 将所有输入注册到 Trace 中，获取它们的 Node ID
+        let mut current_layer_ids: Vec<usize> = inputs.iter()
+            .map(|leaf| trace.push_leaf(leaf.clone()))
+            .collect();
+        
+        let mut current_layer_values = inputs.to_vec();
+
+        // 2. Hierarchical Reduction (Tree Structure)
+        // 模拟 Rayon 的归约过程，但是是记录在案的。
+        // Loop until only one node remains (The Root).
+        while current_layer_ids.len() > 1 {
+            let mut next_layer_ids = Vec::new();
+            let mut next_layer_values = Vec::new();
+
+            // Pairwise folding (A+B, C+D, ...)
+            for chunk_ids in current_layer_ids.chunks(2) {
+                if chunk_ids.len() == 2 {
+                    let left_id = chunk_ids[0];
+                    let right_id = chunk_ids[1];
+                    
+                    // Retrieve values from the 'nodes' in trace (or logical cache)
+                    // Note: In a real implementation we might cache values separately to avoid borrowing trace.
+                    // Here we assume sequential processing matches indices.
+                    // We need to fetch the actual AffineTuples computed previously.
+                    // For simplicity, we carry `current_layer_values` alongside.
+                    let val_idx = chunk_ids[0] % 2; // Logic simplification for demo loop matching
+                    // Correct approach: track indices in `current_layer_values`
+                    
+                    // Let's refine the index logic:
+                    // Since we are iterating chunks, we need corresponding values.
+                    // But `chunks` on slice is hard with index mapping.
+                    // Let's iterate by index steps.
+                }
+            }
+            
+            // Re-implementing simplified loop
+            let mut i = 0;
+            while i < current_layer_ids.len() {
+                if i + 1 < current_layer_ids.len() {
+                    let prev_id = current_layer_ids[i];
+                    let next_id = current_layer_ids[i+1];
+                    
+                    let prev_val = &current_layer_values[i];
+                    let next_val = &current_layer_values[i+1];
+
+                    // Execute Logic: Next * Prev (Time Compose)
+                    // or Merge (Space Fold) depending on context.
+                    // Assume Time Folding for sequence tensor:
+                    let result = next_val.compose(prev_val).expect("Fold Error");
+                    
+                    // Record in Tape
+                    let new_id = trace.push_compose(prev_id, next_id, result.clone());
+                    
+                    next_layer_ids.push(new_id);
+                    next_layer_values.push(result);
+                    
+                    i += 2;
+                } else {
+                    // Odd element out, carry over
+                    next_layer_ids.push(current_layer_ids[i]);
+                    next_layer_values.push(current_layer_values[i].clone());
+                    i += 1;
+                }
+            }
+
+            current_layer_ids = next_layer_ids;
+            current_layer_values = next_layer_values;
         }
 
-        let root_b = self.compute_root_internal(&order_b)?;
-
-        // 3. The Judgment (最终审判)
-        // 比较 P 因子和 Q 移位是否完全一致
-        let p_match = root_a.p_factor == root_b.p_factor;
-        let q_match = root_a.q_shift == root_b.q_shift;
-
-        if !p_match || !q_match {
-            // [FALSIFIED]: 证伪成功，系统存在严重逻辑漏洞
-            eprintln!("❌ HOLOGRAPHIC VIOLATION DETECTED!");
-            eprintln!("   Order A {:?} -> Root: {:?}", order_a, root_a);
-            eprintln!("   Order B {:?} -> Root: {:?}", order_b, root_b);
-            return Ok(false);
+        HyperTensor {
+            root: current_layer_values[0].clone(),
+            trace: Some(trace),
         }
-
-        // [VERIFIED]: 全息一致性通过
-        Ok(true)
+    }
+    
+    /// 🔍 Introspection (自省)
+    /// 打印逻辑折叠的深度和复杂度。
+    pub fn complexity(&self) -> usize {
+        match &self.trace {
+            Some(t) => t.nodes.len(),
+            None => 0, // 快速模式下不可知
+        }
     }
 }
