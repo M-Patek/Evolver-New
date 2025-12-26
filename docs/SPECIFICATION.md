@@ -1,102 +1,134 @@
-HYPER-TENSOR PROTOCOL (HTP): Technical Specification
+# White-Box Hyper-Tensor Protocol: Technical Specification v1.0
 
-1. Mathematical Preliminaries
+## 1. System Parameters & Constants
 
-1.1 Class Group Parameters
+Unlike the previous version which relied on cryptographic parameters (Discriminants), the White-Box architecture relies on **Geometric Hyper-Parameters**.
 
-Discriminant Generation:
-Define $\Delta = -M$, where $M \equiv 3 \pmod 4$ is a prime generated via Hash-to-Prime.
+### 1.1 Manifold Configuration
+* **Dimension ($D$)**: The dimensionality of the logic state vector.
+    * *Default*: $D = 512$ (standard) or $1024$ (high-fidelity).
+* **Precision ($\mathbb{F}$)**: The floating-point standard used for algebraic operations.
+    * *Type*: IEEE 754 `Float32` (training) or `BFloat16` (inference).
+    * *Reasoning*: High precision is required for deep causal chains to prevent vanishing gradients, but exact integer arithmetic is no longer needed.
 
-Security: Relies on the difficulty of computing the class number $h(\Delta)$.
+### 1.2 Tensor Bounds
+To ensure stability during continuous differentiation:
+* **Lipschitz Constant ($K$)**: Maximum allowed norm for any weight matrix $W$.
+    * Constraint: $\|W\|_2 \le 1.0 + \epsilon$
+* **Bias Clamp**: Maximum absolute value for bias vector components.
 
-1.2 Dual-Operator System
+---
 
-HTP utilizes two distinct algebraic operators to separate temporal causality from spatial topology.
+## 2. Core Data Structures
 
-Time Operator ($\oplus_{\text{time}}$): Non-commutative affine composition for history.
+### 2.1 The Logical State ($S$)
+A neuron's activation state is no longer a Class Group element, but a dense vector.
 
-$$\mathcal{A}_1 \oplus \mathcal{A}_2 = (P_1 P_2, \quad Q_1^{P_2} Q_2)$$
+```rust
+struct LogicState {
+    coords: Tensor<f32, D>, // The position in the logical manifold
+}
+```
 
-Space Operator ($\otimes_{\text{space}}$): Commutative group aggregation for topology.
+### 2.2 The Affine Transformation Tuple ($\mathcal{A}$)
+The fundamental unit of logic, replacing the old `(Prime, Element)` pair. It represents a "Causal Transition".
 
-$$\mathcal{A}_1 \otimes \mathcal{A}_2 = (P_1 P_2, \quad Q_1 Q_2)$$
+```rust
+struct AffineTuple {
+    linear: Matrix<f32, D, D>, // Represents the logical implication (W)
+    translation: Vector<f32, D>, // Represents the bias/correction (b)
+}
+```
 
-2. Affine Structure & Optimization
+---
 
-2.1 The Affine Tuple
+## 3. Algebraic Protocols (The Kernel)
 
-Define the tuple $\mathcal{A} = (P, Q)$ where $P \in \mathbb{Z}$ and $Q \in Cl(\Delta)$.
+This section defines the rigorous implementation of the **Dual-Operator System**.
 
-2.2 Time Evolution (Neuron Memory)
+### 3.1 Time Evolution Operator ($\oplus_{time}$)
+**Purpose**: To combine two sequential logical steps into a single equivalent step.
+**Input**: $\mathcal{A}_1$ (Step 1), $\mathcal{A}_2$ (Step 2, occurring after Step 1).
+**Output**: $\mathcal{A}_{result}$
 
-Used within HTPNeuron memory cells to record sequential events.
+**Algorithm**:
+1.  **Linear Composition**:
+    $$W_{new} = W_2 \times W_1$$
+    *(Standard Matrix Multiplication)*
+2.  **Bias Propagation**:
+    $$b_{new} = (W_2 \times b_1) + b_2$$
+    *(Affine Shift)*
 
-Input: Stream of affine tuples.
+**Code Representation**:
+```rust
+fn compose_time(prev: &AffineTuple, next: &AffineTuple) -> AffineTuple {
+    AffineTuple {
+        linear: next.linear.matmul(&prev.linear),
+        translation: next.linear.matmul(&prev.translation) + next.translation,
+    }
+}
+```
 
-Aggregation: Segment Tree using $\oplus_{\text{time}}$.
+### 3.2 Space Merging Operator ($\otimes_{space}$)
+**Purpose**: To fold context from parallel branches (e.g., Multi-Head Attention equivalent).
+**Input**: $\mathcal{A}_{left}$, $\mathcal{A}_{right}$.
+**Output**: $\mathcal{A}_{folded}$
 
-Result: A single tuple $\mathcal{A}_{\text{cell}}$ representing the entire causal history of that memory cell.
+**Algorithm**:
+1.  **Symmetric Aggregation**:
+    $$W_{folded} = \text{Normalize}(W_{left} + W_{right})$$
+    $$b_{folded} = \text{Average}(b_{left}, b_{right})$$
+    *(Note: The specific reduction function can be summation, averaging, or a Hadamard product depending on the specific layer type)*.
 
-2.3 Space Aggregation (Hyper-Tensor)
+---
 
-Used by the HyperTensor to fold dimensions.
+## 4. Hyper-Tensor Topology (The Architecture)
 
-Input: Spatial grid of $\mathcal{A}_{\text{cell}}$ (snapshots).
+### 4.1 Recursive Folding (The "Pyramid")
+The network structure remains a hierarchical tree.
+* **Leaf Nodes**: Raw input tokens embedded into initial Affine Tuples $\mathcal{A}_{token} = (I, \text{Embedding}(token))$.
+* **Branch Nodes**: Results of $\oplus_{time}$ operations representing logic chains.
+* **Root Node**: The final folded state representing the conclusion of the entire context window.
 
-Aggregation: Dimensional folding using $\otimes_{\text{space}}$.
+### 4.2 Coordinate Mapping
+Input tokens are mapped to the manifold via a trainable **Embedding Matrix**.
+* $TokenID \rightarrow \vec{v} \in \mathbb{R}^D$
+* This mapping is invertible, allowing the `InverseDecoder` to function.
 
-Result: A unique Global Root that is independent of the folding order.
+---
 
-3. Hyper-Tensor Topology
+## 5. Verification & Navigation
 
-3.1 Coordinate Mapping
+### 5.1 The Logical Trace
+Instead of Zero-Knowledge Proofs, the system generates a **Differential Trace**.
+* **Definition**: A record of all partial derivatives $\frac{\partial S_{final}}{\partial W_i}$ along the active path.
+* **Usage**: Used by the optimizer to adjust weights.
 
-Define the mapping from logical index $i$ to vector $\vec{v}$:
+### 5.2 Inverse Solving (Navigation)
+To generate the next token, the system solves the navigation equation:
 
+**Problem**: Find token $T$ such that $S_{next} \approx \text{Embedding}(T)$.
+**Method**:
+1.  Project the current logical state $S_{final}$ into the vocabulary space:
+    $$Logits = S_{final} \times W_{vocab}^T$$
+2.  Select the token with the highest alignment score (dot product) or minimal Euclidean distance.
+3.  *(Optional One-Shot Correction)*: If the selected token is "almost" correct but implies a slight logic error, calculate the specific $\vec{b}_{correction}$ needed to make it perfect and back-propagate immediately.
 
-$$v_k = (i // L^{k-1}) \pmod L$$
+---
 
-3.2 Dimensional Folding
+## 6. Serialization (Wire Format)
 
-The tensor dimensionality reduction function $\Phi$ utilizes the Space Operator:
+For distributed training, we transmit raw tensors rather than cryptographic proofs.
 
-$$\Phi(Tensor_d) = \bigotimes_{i=1}^{L} Tensor_{(i, \dots)}$$
+### 6.1 Packet Structure
+```protobuf
+message GradientUpdate {
+    uint32 layer_id = 1;
+    bytes tensor_data = 2; // Serialized f32 array
+    repeated uint32 active_path_indices = 3; // Sparse update indices
+}
+```
 
-3.3 Orthogonal Anchoring
-
-A valid proof for point $\vec{v}$ consists of a hybrid path:
-
-Time Path (Micro): The non-commutative Merkle path inside the cell at $\vec{v}$, verifying the specific event history.
-
-Space Path (Macro): The commutative Merkle path through the tensor dimensions along the Challenge Axis.
-
-Consistency Check:
-Since $\otimes_{\text{space}}$ is commutative, the Verifier can request folding along any axis (e.g., Y-axis), and the result must match the Global Root.
-
-$$\text{Fold}_{\text{challenge\_axis}}(\text{Slice}) \equiv \text{GlobalRoot}$$
-
-4. Protocol Flow
-
-4.1 Fiat-Shamir Transformation
-
-Define non-interactive challenge generation:
-
-$$Challenge\_Axis = Hash(Global\_Root \parallel User\_ID) \pmod d$$
-
-4.2 Verification Algorithm
-
-Verifier client logic:
-
-Parse Proof: Extract Time Path and Space Path.
-
-Verify Time (Micro): Recompute the cell's history using $\oplus_{\text{time}}$.
-
-
-$$\mathcal{A}_{\text{cell}} = \text{AggregateTime}(\text{TimePath})$$
-
-Verify Space (Macro): Aggregate the cell's result with spatial siblings using $\otimes_{\text{space}}$.
-
-
-$$\text{ComputedRoot} = \mathcal{A}_{\text{cell}} \otimes \text{AggregateSpace}(\text{SpacePath})$$
-
-Assert: Check if $\text{ComputedRoot} == Global\_Root$.
+### 6.2 Storage
+* **Format**: `.safetensors` or raw binary.
+* **Endianness**: Little-endian.
