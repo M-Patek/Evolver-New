@@ -1,7 +1,7 @@
 # Hyper-Tensor Protocol: The Pure Logic Neural Architecture
 > "From Probabilistic Guessing to Algebraic Derivation."
 
-**White-Box Evolver** is a next-generation AI architecture designed to solve the fundamental limitations of statistical models. By replacing black-box probabilities with rigorous **Non-Commutative Algebra** on differentiable manifolds, it creates a neural system where every inference is a traceable, mathematical derivation.
+**Evolver** is a next-generation AI architecture designed to solve the fundamental limitations of statistical models. By replacing black-box probabilities with rigorous **Non-Commutative Algebra** on differentiable manifolds, it creates a neural system where every inference is a traceable, mathematical derivation.
 
 ---
 
