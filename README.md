@@ -78,3 +78,41 @@ The entire system is **Lipschitz Continuous**, enabling two powerful training mo
 git clone [https://github.com/m-patek/white-box-evolver.git](https://github.com/m-patek/white-box-evolver.git)
 cd white-box-evolver
 cargo build --release
+```
+
+### Basic Usage
+
+```rust
+use evolver::prelude::*;
+
+fn main() {
+    // 1. Initialize the Manifold
+    let mut brain = HyperTensorNetwork::new(Config::default());
+
+    // 2. Derive Logic (Forward Pass)
+    let premise = tensor!("All humans are mortal");
+    let fact = tensor!("Socrates is human");
+    
+    let conclusion = brain.derive(premise, fact);
+    
+    // 3. Verify Result
+    assert_eq!(conclusion.decode(), "Socrates is mortal");
+}
+```
+
+---
+
+## 🗺️ Roadmap
+
+* **Phase 1: Foundation**: Implementation of Differentiable Manifold kernels and Dual-Operator Algebra. (Complete)
+* **Phase 2: The Solver**: Implementation of Algebraic Inversion for one-shot learning. (In Progress)
+* **Phase 3: Scale**: Distributed Hyper-Tensor Folding for infinite context windows.
+
+---
+
+## ⚖️ License
+
+**M-Patek PROPRIETARY LICENSE**
+Copyright © 2025 M-Patek Research. All Rights Reserved.
+
+*Pure Logic. Zero Magic.*
