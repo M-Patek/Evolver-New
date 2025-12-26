@@ -1,350 +1,125 @@
-# HYPER-TENSOR PROTOCOL (HTP): Theoretical Proofs
+# White-Box Hyper-Tensor Theory: A Differentiable Logic Framework
 
-## Abstract
+## 1. Introduction: The Logic of Continuous Manifolds
 
-This document provides the formal mathematical derivations for the HYPER-TENSOR PROTOCOL (HTP). It establishes the Dual-Operator Architecture: using non-commutative affine evolution for temporal integrity, and commutative Abelian aggregation for spatial holography. This separation guarantees both historical order sensitivity and multi-dimensional verification consistency.
+The White-Box Evolver architecture represents a paradigm shift from cryptographic obfuscation to **algebraic transparency**.
 
-## 1. The Time Operator: Non-Commutative Evolution
+Unlike traditional Transformers which rely on probabilistic statistics, or the previous Evolver iteration which relied on discrete hardness (DLP), this framework is built upon **Smooth Differentiable Manifolds**.
 
-### 1.1 Problem Definition
+By mapping logical states to continuous geometric spaces, we achieve two fundamental properties simultaneously:
+1.  **Rigid Causality**: Preserved through non-commutative affine transformations.
+2.  **Infinite Trainability**: Enabled by the existence of smooth gradients ($\nabla$) and analytical inverse operators.
 
-In standard accumulators, operations are commutative ($x^{ab} = x^{ba}$), allowing history rewriting. HTP enforces order sensitivity in the temporal dimension.
+---
 
-Let $S_t$ be the state at step $t$. The state transition is defined as:
+## 2. Mathematical Foundations
 
-$$
-S_t = \mathcal{F}(S_{t-1}, P_t, h_t) = S_{t-1}^{P_t} \cdot G^{h_t} \pmod \Delta
-$$
+### 2.1 The State Space ($\mathcal{M}$)
+We define the logical state of a neuron not as a discrete element in a Class Group, but as a point in a high-dimensional **Differentiable Manifold** $\mathcal{M}$ (typically $\mathbb{R}^n$ or a Lie Group $GL(n, \mathbb{R})$).
 
-Where:
-* $P_t$: Prime representative of the event/token at step $t$.
-* $h_t$: Hash of the spacetime depth $H(t)$.
-* $G$: Generator of the class group.
+$$S \in \mathcal{M} \cong \mathbb{R}^d$$
 
-### 1.2 Recursive Expansion
+### 2.2 The Transformation Tensor ($W$)
+Logic transitions are defined by linear or affine transformations acting on this manifold. A "weight" is no longer a prime number, but a **Transformation Matrix** (or Tensor) $W$.
 
-We express state $S_n$ as a function of previous state $S_{k-1}$:
+$$W \in \mathbb{R}^{d \times d}$$
 
-$$
-S_n = S_{k-1}^{\left( \prod_{i=k}^n P_i \right)} \cdot \left( G^{h_k \cdot \prod_{j=k+1}^n P_j} \cdot \dots \cdot G^{h_n} \right)
-$$
+---
 
-This structure proves that any change in the sequence $P_k \dots P_n$ fundamentally alters the final state $S_n$.
+## 3. The Dual-Operator Algebra
 
-### 1.3 Derivation of Time Composition Law ($\oplus_{\text{time}}$)
+The core of the Hyper-Tensor Protocol remains the separation of **Time** (Causality) and **Space** (Context). This is formalized by two distinct algebraic operators.
 
-To enable efficient verification, we define the affine tuple $\mathcal{A} = (P, Q)$ acting on state $S$ as $\rho(\mathcal{A}, S) = S^P \cdot Q$. For two consecutive transformations $\mathcal{A}_1 = (P_1, Q_1)$ and $\mathcal{A}_2 = (P_2, Q_2)$, the merged operator is derived as:
+### 3.1 Time Operator: Non-Commutative Affine Composition ($\oplus_{time}$)
 
-$$
-\begin{aligned}
-\rho(\mathcal{A}_2, \rho(\mathcal{A}_1, S)) &= (S^{P_1} \cdot Q_1)^{P_2} \cdot Q_2 \\
-&= S^{P_1 P_2} \cdot (Q_1^{P_2} \cdot Q_2)
-\end{aligned}
-$$
+Time evolution is modeled as an **Affine Transformation**. The "memory" of a neuron is a tuple of (Cumulative Linear Logic $W$, Cumulative Bias $B$).
 
-Thus, the Time Operator is defined as:
+Given two time steps $\mathcal{A}_1 = (W_1, \vec{b}_1)$ and $\mathcal{A}_2 = (W_2, \vec{b}_2)$, where $\mathcal{A}_1$ occurs *before* $\mathcal{A}_2$, the composition is defined as:
 
 $$
-\mathcal{A}_1 \oplus_{\text{time}} \mathcal{A}_2 = (P_1 \cdot P_2, \quad Q_1^{P_2} \cdot Q_2)
+\mathcal{A}_{combined} = \mathcal{A}_2 \oplus_{time} \mathcal{A}_1 = (W_2 \cdot W_1, \quad W_2 \cdot \vec{b}_1 + \vec{b}_2)
 $$
 
-### 1.4 Associativity Proof
+**Key Properties:**
+* **Non-Commutative**: In general, $W_2 W_1 \neq W_1 W_2$.
+    * *Interpretation*: "If A then B" is mathematically distinct from "If B then A". The order of inputs strictly determines the final algebraic state.
+* **Associative**: $(\mathcal{A}_3 \oplus \mathcal{A}_2) \oplus \mathcal{A}_1 = \mathcal{A}_3 \oplus (\mathcal{A}_2 \oplus \mathcal{A}_1)$.
+    * *Interpretation*: Logic history can be segmented and parallelized (Merkle aggregation) without losing causal integrity.
 
-For Segment Trees to function, the operator must be associative: $(\mathcal{A}_1 \oplus \mathcal{A}_2) \oplus \mathcal{A}_3 \equiv \mathcal{A}_1 \oplus (\mathcal{A}_2 \oplus \mathcal{A}_3)$.
+### 3.2 Space Operator: Commutative Tensor Merging ($\otimes_{space}$)
 
-**Left Side:** $(\mathcal{A}_1 \oplus \mathcal{A}_2) \oplus \mathcal{A}_3$
-
-$$
-= (P_1 P_2 P_3, \quad (Q_1^{P_2} Q_2)^{P_3} Q_3) = (P_1 P_2 P_3, \quad Q_1^{P_2 P_3} Q_2^{P_3} Q_3)
-$$
-
-**Right Side:** $\mathcal{A}_1 \oplus (\mathcal{A}_2 \oplus \mathcal{A}_3)$
+Spatial context (folding information from different branches) is modeled as a symmetric operation on the manifold, typically **Tensor Addition** or **Hadamard Product**.
 
 $$
-= (P_1 (P_2 P_3), \quad Q_1^{P_2 P_3} (Q_2^{P_3} Q_3)) = (P_1 P_2 P_3, \quad Q_1^{P_2 P_3} Q_2^{P_3} Q_3)
+\mathcal{A}_{merged} = \mathcal{A}_1 \otimes_{space} \mathcal{A}_2 = (W_1 + W_2, \quad \vec{b}_1 + \vec{b}_2)
 $$
 
-**Conclusion:** The Time Operator is Associative but Non-Commutative.
+**Key Properties:**
+* **Commutative**: $\mathcal{A}_1 \otimes \mathcal{A}_2 = \mathcal{A}_2 \otimes \mathcal{A}_1$.
+    * *Interpretation*: The order in which we combine independent facts does not matter. "Sky is blue" and "Grass is green" yield the same context regardless of which is seen first.
 
-## 2. The Space Operator: Commutative Aggregation
+---
 
-### 2.1 The Dimensional Conflict
+## 4. Analytical Trainability
 
-Previous attempts to use $\oplus_{\text{time}}$ for spatial folding failed because non-commutativity implies $\text{Fold}_y(\text{Fold}_x(\mathcal{T})) \neq \text{Fold}_x(\text{Fold}_y(\mathcal{T}))$, making orthogonal verification impossible.
+The removal of the Discrete Logarithm Problem (DLP) unlocks direct mathematical manipulation of the network's logic.
 
-### 2.2 Derivation of Space Composition Law ($\otimes_{\text{space}}$)
+### 4.1 Gradient Descent (The "Slide")
 
-To ensure holographic consistency, spatial aggregation must be Commutative. We leverage the intrinsic Abelian property of the Class Group $Cl(\Delta)$ and integer multiplication. We define the Space Operator as component-wise aggregation:
+Since the operations $\oplus_{time}$ and $\otimes_{space}$ are composed of differentiable linear algebra operations (MatMul, Add), the Loss landscape is **Lipschitz Continuous**.
 
-$$
-\mathcal{A}_1 \otimes_{\text{space}} \mathcal{A}_2 = (P_1 \cdot P_2, \quad Q_1 \cdot Q_2)
-$$
-
-Where $Q_1 \cdot Q_2$ is standard group multiplication.
-
-### 2.3 Proof of Commutativity
-
-Since $\mathbb{Z}$ and $Cl(\Delta)$ are Abelian:
-$P_1 \cdot P_2 = P_2 \cdot P_1$
-$Q_1 \cdot Q_2 = Q_2 \cdot Q_1$
-
-Therefore:
+For a target output $T$ and current output $Y$, the Loss function $\mathcal{L} = \| Y - T \|^2$ is differentiable with respect to any weight $W_i$ in the chain:
 
 $$
-\mathcal{A}_1 \otimes_{\text{space}} \mathcal{A}_2 = \mathcal{A}_2 \otimes_{\text{space}} \mathcal{A}_1
+\frac{\partial \mathcal{L}}{\partial W_i} = \frac{\partial \mathcal{L}}{\partial Y} \cdot \frac{\partial Y}{\partial W_i}
 $$
 
-## 3. Hyper-Tensor Folding & Verification
+This allows for standard **Backpropagation**, converging exponentially faster than Evolutionary Strategies.
 
-### 3.1 Tensor Structure
+### 4.2 Algebraic Inversion (The "Solver")
 
-The Hyper-Tensor $\mathcal{T}$ uses a hybrid topology:
-* **Micro-Cells (Time):** Internal neuron history is aggregated via $\oplus_{\text{time}}$.
-* **Macro-Grid (Space):** Tensor dimensions are folded via $\otimes_{\text{space}}$.
+In many cases, we can bypass iterative training entirely using the **Inverse Operator Theorem**.
 
-### 3.2 The Folding Operator $\Phi$
-
-For a tensor of dimension $d$, folding along dimension $k$ uses the Space Operator:
+**Theorem 4.2 (Logic Inversion):**
+Given a state $S_{in}$ and a desired target state $S_{target}$, if the transformation $W$ is invertible (full rank), the required logic $W^*$ can be solved analytically:
 
 $$
-\text{Fold}_k(\mathcal{T}) = \bigotimes_{i=1}^{L} \mathcal{T}_{(i, \dots)}
+S_{target} = W^* \cdot S_{in} + \vec{b}
 $$
 
-### 3.3 Orthogonal Consistency Proof
-
-We assert that for any two axes $x, y$:
-
 $$
-\text{Fold}_y(\text{Fold}_x(\mathcal{T})) \equiv \text{Fold}_x(\text{Fold}_y(\mathcal{T}))
+W^* = (S_{target} - \vec{b}) \cdot S_{in}^{-1}
 $$
 
-**Proof:**
-Let $\mathcal{T}_{ij}$ be the element at $x=i, y=j$.
+* **Significance**: This allows the network to "learn" a fact in a single step (One-Shot Learning) by calculating the exact matrix required to bridge the premise and the conclusion.
 
-**LHS:** $\bigotimes\_j (\bigotimes\_i \mathcal{T}\_{ij}) = \prod\_{j} \prod\_{i} \mathcal{T}\_{ij}$
+---
 
-**RHS:** $\bigotimes\_i (\bigotimes\_j \mathcal{T}\_{ij}) = \prod\_{i} \prod\_{j} \mathcal{T}\_{ij}$
+## 5. Topological Validity
 
-Since the product is over a finite Abelian group, the order of terms does not matter.
+### 5.1 Zero Hallucination via Closed-Loop Verification
 
-**Q.E.D.**
+A valid logical path in White-Box Evolver is defined as a path where the algebraic closure holds.
 
-## 4. Security Reductions
-
-### 4.1 Time Security (Hidden Order Assumption)
-
-The security of the time dimension relies on the infeasibility of finding the order of $Cl(\Delta)$. An adversary cannot forge a history proof $(W, R)$ such that $W^P \cdot R \equiv T$ without solving the discrete log or order problem.
-
-### 4.2 Space Security (Strong RSA / Adaptive Root)
-
-The security of the space dimension, effectively a product of primes and group elements, relies on the Strong RSA assumption (for $P$ factor factorization) and the Adaptive Root Assumption in Class Groups (for $Q$ aggregation). Forging a spatial inclusion proof requires solving the root problem $X^e \equiv Y \pmod \Delta$.
-
-### 4.3 The Kernel Trap (Boundary Analysis)
-
-#### 4.3.1 Mathematical Possibility
-While the Non-Commutative Time Operator ($\oplus_{\text{time}}$) generally ensures that any perturbation $\varepsilon$ in the input state propagates to the output, there exists a theoretically possible boundary condition known as **"The Kernel Trap."**
-
-Let the perturbation be $\varepsilon \neq 1$. If $\varepsilon$ falls into the kernel of the power map $x \mapsto x^P$, i.e.,
+If a set of premises $P_1, ..., P_n$ leads to a conclusion $C$, then the affine composition of the path must equal the coordinate of $C$.
 
 $$
-\varepsilon^P \equiv 1 \pmod \Delta
+\left( \bigoplus_{i=1}^n \mathcal{A}_i \right) \cdot S_{start} \equiv S_{conclusion}
 $$
 
-then the output state remains unchanged despite the input mutation:
+Any deviation (hallucination) results in a coordinate mismatch:
+$$\| S_{calculated} - S_{observed} \| > \epsilon$$
 
-$$
-\rho(\mathcal{A}, S \cdot \varepsilon) = (S \cdot \varepsilon)^P \cdot Q = S^P \cdot \varepsilon^P \cdot Q = S^P \cdot 1 \cdot Q = \rho(\mathcal{A}, S)
-$$
+This allows the system to fundamentally detect logical inconsistencies, mathematically prohibiting "plausible but false" statements.
 
-Mathematically, this occurs if and only if the order of the perturbation element, denoted as $\text{ord}(\varepsilon)$, divides the semantic prime $P$:
+---
 
-$$
-\text{ord}(\varepsilon) \mid P
-$$
+## 6. Summary of Transition
 
-#### 4.3.2 Engineering Mitigation
-In the HTP engineering implementation, we render the probability of falling into the Kernel Trap negligible through three layers of defense:
-
-1.  **Huge Class Number ( $h(\Delta)$ ):**
-    By enforcing a discriminant size of $\geq 2048$ bits (see `param.rs`), the size of the Class Group is astronomically large ($\approx \sqrt{|\Delta|}$). This makes the probability of randomly encountering an element with a specific small order effectively zero ($< 2^{-100}$).
-
-2.  **Large Semantic Primes ($P$):**
-    The system weights $P$ are generated via `hash_to_prime` and are guaranteed to be large primes (e.g., 64-bit or 128-bit). Since $P$ is prime:
-    * For $\text{ord}(\varepsilon) \mid P$ to hold, $\text{ord}(\varepsilon)$ must be equal to $P$ (since $\varepsilon \neq 1$).
-    * This implies the attacker must find an element $\varepsilon$ whose order is exactly the large prime $P$.
-
-3.  **Small Order Filtering (Code Level):**
-    In `algebra.rs`, the `ClassGroupElement::generator` and validation logic explicitly filter out elements with small orders (e.g., 2, 3, 5). While this does not strictly eliminate elements of order $P$, combined with the **Hidden Order Assumption**, finding an element of a specific large order $P$ without knowing the class number $h(\Delta)$ is computationally equivalent to solving the Discrete Logarithm Problem or factoring the class number, which is infeasible.
-
-**Conclusion:** While the Kernel Trap is a valid algebraic boundary, it is cryptographically inaccessible in the Evolver architecture.
-
-## 5. Bias-Controlled Decoding (Stable Control over a Chaotic Core)
-
-### 5.1 Definitions
-
-**Definition 5.1 (Affine Roots and GlobalRoot_alg)**
-Let each micro-cell aggregate its local history using the Time Operator $\oplus_{\text{time}}$, producing an affine tuple $A_{\text{cell}} = (P_{\text{cell}}, Q_{\text{cell}})$. Let the macro-grid fold all cells using the Space Operator $\otimes_{\text{space}}$, producing the algebraic global root:
-
-$$
-A_{\text{alg}} = \bigotimes_{\vec{v} \in T} A_{\text{cell}}(\vec{v}) \quad \text{and} \quad \text{GlobalRoot}_{\text{alg}} := A_{\text{alg}}.
-$$
-
-(As established in Sections 1–3, $\oplus_{\text{time}}$ is associative and order-sensitive; $\otimes_{\text{space}}$ is commutative and axis-independent.)
-
-**Definition 5.2 (Coordinate Space as a Torus)**
-Let the decoder coordinate space be the finite Abelian group (a discrete torus):
-
-$$
-\text{Coord} := (\mathbb{Z}/L\mathbb{Z})^d,
-$$
-
-with component-wise addition modulo $L$. Define the per-dimension circular distance:
-
-$$
-d_L(x, y) := \min(|x - y|, L - |x - y|),
-$$
-
-and the torus distance for vectors (any norm over per-dimension distances is acceptable; e.g. $\ell_1$):
-
-$$
-d(\vec{x}, \vec{y}) := \left\| (d_L(x_1, y_1), \dots, d_L(x_d, y_d)) \right\|.
-$$
-
-**Definition 5.3 (Chaotic Projection $\Psi$)**
-Let $\Psi$ be the (possibly chaotic / one-way) projection used by the decoder:
-
-$$
-\Psi: Cl(\Delta) \to \text{Coord}.
-$$
-
-No continuity, smoothness, or Lipschitz assumptions are made about $\Psi$. In particular, $\Psi$ may be induced by reduction/canonicalization and thus be effectively discontinuous.
-
-**Definition 5.4 (Linear Bias Channel and Final Output Coordinate)**
-Let $\vec{b} \in \text{Coord}$ be a bias vector. Define the bias-augmented output coordinate as:
-
-$$
-\text{OutCoord}(A_{\text{alg}}, \vec{b}) := (\Psi(Q_{\text{alg}}) + \vec{b}) \pmod L,
-$$
-
-where $A_{\text{alg}} = (P_{\text{alg}}, Q_{\text{alg}})$.
-
-*Interpretation:*
-* **Channel A (logic):** $\Psi(Q_{\text{alg}})$ remains chaotic and provides jump-like addressing.
-* **Channel B (control):** $\vec{b}$ is a linear translation in $\text{Coord}$, providing stable and predictable micro-adjustments.
-
-**Definition 5.5 (Bias Commitment and ProofBundle)**
-Let the bias field over tensor coordinates be $\{\vec{b}(\vec{v})\}_{\vec{v} \in T}$, committed via an axis-independent space construction (e.g., a bias tensor folded by $\otimes_{\text{space}}$, or a Merkle commitment). Denote the commitment root as $\text{GlobalRoot}_{\text{bias}}$.
-
-Define a composite root that binds algebra, bias, and context:
-
-$$
-\text{GlobalRoot} := H(\text{Ser}(\text{GlobalRoot}_{\text{alg}}) \parallel \text{Ser}(\text{GlobalRoot}_{\text{bias}}) \parallel \text{ctx}),
-$$
-
-where $\text{ctx}$ includes request-scoped identifiers (e.g., request_id, log_epoch, model_id, etc.), $\text{Ser}(\cdot)$ is a canonical serialization, and $H$ is a cryptographic hash.
-
-A **ProofBundle** is defined as:
-
-$$
-\text{ProofBundle} := (\text{ctx}, \text{GlobalRoot}_{\text{alg}}, \text{GlobalRoot}_{\text{bias}}, \text{GlobalRoot}, \text{Proof}_{\text{alg}}, \text{Proof}_{\text{bias}})
-$$
-
-where:
-* $\text{Proof}\_{\text{alg}}$ proves the claimed $Q\_{\text{alg}}$ (or the relevant cell root feeding into it) is consistent with $\text{GlobalRoot}\_{\text{alg}}$, using $\oplus\_{\text{time}}$ (micro) and $\otimes\_{\text{space}}$ (macro) inclusion/aggregation.
-* $\text{Proof}\_{\text{bias}}$ proves the bias vector $\vec{b}$ used for output is the committed value under $\text{GlobalRoot}\_{\text{bias}}$ for the same $\text{ctx}$.
-
-### 5.2 Lemma: Stability of the Linear Bias Channel
-
-**Lemma 5.6 (Translation Isometry; 1-Lipschitz Stability)**
-For fixed $A_{\text{alg}}$, the mapping
-
-$$
-T(\vec{b}) := \text{OutCoord}(A_{\text{alg}}, \vec{b})
-$$
-
-is an isometry on $(\text{Coord}, d)$. In particular, for any $\delta \in \text{Coord}$:
-
-$$
-d(T(\vec{b} + \delta), T(\vec{b})) = d(\delta, \vec{0}).
-$$
-
-**Proof.**
-
-$$
-T(\vec{b} + \delta) - T(\vec{b}) = (\Psi(Q_{\text{alg}}) + \vec{b} + \delta) - (\Psi(Q_{\text{alg}}) + \vec{b}) = \delta \pmod L
-$$
-
-Component-wise, translation does not change circular differences, hence distances are preserved by definition of $d_L$.
-
-**Q.E.D.**
-
-### 5.3 Theorem: Exact Controllability in Coordinate Space
-
-**Theorem 5.7 (Surjectivity / Exact Control by $\vec{b}$)**
-Fix $A_{\text{alg}}$ and define $\vec{c} := \Psi(Q_{\text{alg}})$. For any target coordinate $\vec{c}^* \in \text{Coord}$, there exists a unique $\vec{b}^* \in \text{Coord}$ such that
-
-$$
-\text{OutCoord}(A\_{\text{alg}}, \vec{b}^*) = \vec{c}^*,
-$$
-
-namely
-
-$$
-\vec{b}^* := \vec{c}^* - \vec{c} \pmod L.
-$$
-
-**Proof.**
-Direct substitution yields:
-
-$$
-(\vec{c} + \vec{b}^*) \pmod L = (\vec{c} + (\vec{c}^* - \vec{c})) \pmod L = \vec{c}^*.
-$$
-
-Uniqueness follows because addition in $\text{Coord}$ is a group action by translations, hence bijective.
-
-**Q.E.D.**
-
-**Corollary 5.8 (Finite Convergence Under Discrete LocalShift)**
-Assume LocalShift is restricted to unit moves $\delta \in \{\pm \vec{e}\_{i}\}\_{i=1}^{d}$ (one coordinate changes by $\pm 1 \pmod L$ per step). Then from any $\vec{b}$, there exists a deterministic sequence of LocalShift moves reaching $\vec{b}^*$ in exactly $\sum\_{i=1}^{d} d\_{L}(b\_{i}, b^{*}\_{,i})$ steps. Therefore, reachability/convergence in the $\vec{b}$-space is guaranteed without any assumption on the continuity of $\Psi$.
-
-### 5.4 Theorem: Verifiability of Bias-Augmented Outputs
-
-**Theorem 5.9 (Proof-Carrying Bias; No Splicing Under Binding)**
-Assume:
-
-1. $\text{Proof}\_{\{\text{alg}\}}$ verifies $Q\_{\{\text{alg}\}}$ against $\text{GlobalRoot}\_{\{\text{alg}\}}$ under the same $\text{ctx}$.
-2. $\text{Proof}\_{\{\text{bias}\}}$ verifies the revealed $\vec{b}$ against $\text{GlobalRoot}\_{\{\text{bias}\}}$ under the same $\text{ctx}$.
-3. $\text{GlobalRoot}$ binds $\text{GlobalRoot}\_{\{\text{alg}\}}$, $\text{GlobalRoot}\_{\{\text{bias}\}}$, and $\text{ctx}$ as in Definition 5.5 (or equivalently, $\text{GlobalRoot}\_{\{\text{bias}\}}$ is included in the Fiat–Shamir transcript for $\text{Proof}\_{\{\text{alg}\}}$).
-
-Then any verifier can deterministically recompute
-
-$$
-\text{OutCoord} = (\Psi(Q_{\text{alg}}) + \vec{b}) \pmod L
-$$
-
-and the server cannot change $\text{OutCoord}$ (by swapping either $Q_{\text{alg}}$ or $\vec{b}$) without causing at least one verification step to fail.
-
-**Proof (sketch).**
-From (1), $Q_{\text{alg}}$ is bound to $\text{GlobalRoot}_{\text{alg}}$. From (2), $\vec{b}$ is bound to $\text{GlobalRoot}_{\text{bias}}$. From (3), both roots are cryptographically bound to the same $\text{ctx}$ and to $\text{GlobalRoot}$, preventing mix-and-match (“splicing”) of a valid $\text{Proof}_{\text{alg}}$ from one context with a valid $\text{Proof}_{\text{bias}}$ from another. Since $\text{OutCoord}$ is a deterministic function of the verified pair $(Q_{\text{alg}}, \vec{b})$, any deviation changes the committed data and breaks verification.
-
-**Q.E.D.**
-
-### 5.5 Counterexamples and Boundaries (Falsifiability)
-
-**Boundary A (Incorrect Metric Breaks “Continuity” at Wrap-Around)**
-If the verifier uses representative integer subtraction on $\{0, \dots, L-1\}$ instead of the torus distance $d_L$, the stability claim fails at wrap-around.
-*Example:* $L=32, b=31, \delta=1$ yields $(b+\delta) \pmod L = 0$ and naive $|0 - 31| = 31 \neq 1$.
-Therefore Lemma 5.6 requires a circular/torus metric.
-
-**Boundary B (Splicing Attack Without Binding)**
-If $\text{Proof}_{\text{alg}}$ and $\text{Proof}_{\text{bias}}$ are verified independently without a shared $\text{ctx}$ binding (or without $\text{GlobalRoot}$ composition), an adversary can combine:
-* a valid $\text{Proof}_{\text{alg}}$ from run A, and
-* a valid $\text{Proof}_{\text{bias}}$ from run B,
-passing both checks while producing an output coordinate inconsistent with either run’s intended decoding.
-Thus Theorem 5.9 requires explicit binding.
-
-**Boundary C (Constrained Bias Space Reduces Reachability)**
-If $\vec{b}$ is restricted to a subset (e.g., bounded norm, sparsity, fixed Hamming weight, limited update budget), Theorem 5.7 (exact surjectivity) no longer holds. Only reachability within that subset can be claimed, and convergence guarantees must be restated under the constraint model.
-
-**Boundary D (Coordinate Verifiability $\neq$ Token Verifiability)**
-Theorem 5.9 guarantees correctness of the verified coordinate $\text{OutCoord}$. If token selection uses an unproven heuristic (e.g., approximate KNN) the server may still claim an arbitrary token not consistent with $\text{OutCoord}$. Full token-level trust requires a verifiable mapping (e.g., committed vocabulary coordinates plus a verifiable nearest-neighbor proof, or a deterministic decode rule whose steps are provable).
+| Concept | Old Evolver (Phase 2/3) | White-Box Evolver (Current) |
+| :--- | :--- | :--- |
+| **Domain** | Discrete Class Groups $Cl(\Delta)$ | Continuous Manifolds $\mathbb{R}^n$ |
+| **Time Op** | Exponentiation (One-way) | Affine Transform (Reversible) |
+| **Learning** | Stochastic Mutation | Gradient Descent / Inversion |
+| **Nature** | Cryptographic / Obfuscated | Algebraic / Transparent |
+| **Goal** | Security & Privacy | **Pure Logical Intelligence** |
