@@ -1,78 +1,80 @@
-# Evolver: The Pure Logic Neural Architecture
-**(Hyper-Tensor Protocol for Transparent, Differentiable AI)**
+# Hyper-Tensor Protocol: The Pure Logic Neural Architecture
 
-> "From Black-Box Probabilities to White-Box Algebraic Derivation."
+> **"From Probabilistic Guessing to Algebraic Derivation."**
 
-We have dismantled the cryptographic locks to unleash the ultimate logical engine. We trade privacy for **infinite trainability** and **perfect interpretability**.
-
----
-
-## 📖 Core Vision
-**White-Box Evolver** aims to reconstruct the underlying logic of artificial intelligence. We have stripped away the cryptographic hardness (DLP) of the original protocol, replacing chaotic Class Groups with **Smooth Differentiable Manifolds**.
-
-In this architecture, every inference is not a guess, but a **rigorous, traceable algebraic derivation** that supports both Gradient Descent and direct Algebraic Inversion.
+**White-Box Evolver** is a next-generation AI architecture designed to solve the fundamental limitations of statistical models. By replacing black-box probabilities with rigorous **Non-Commutative Algebra** on differentiable manifolds, it creates a neural system where every inference is a traceable, mathematical derivation.
 
 ---
 
-## 📐 The Paradigm Shift: From Chaos to Order
+## 🌌 Core Philosophy
 
-We have replaced the "discrete and chaotic" math with "continuous and smooth" math, while preserving the core **Non-Commutative Causality**.
+Current Large Language Models (LLMs) operate on **Statistics**: they predict the next token based on what is *likely*.
+**Hyper-Tensor Protocol** operates on **Logic**: it derives the next state based on what is *algebraically necessary*.
 
-### 1. Differentiable Evolution
-Evolution is no longer a one-way cryptographic hash, but a reversible linear transformation:
-
-$$S_{t} = \mathcal{F}(S_{t-1}, W_{logic}) + \vec{b}_{bias}$$
-
-* **$S_{t}$ (State):** The transparent logical state vector (Continuous).
-* **$W_{logic}$ (Logic Matrix):** The learnable weight matrix, replacing the old Prime Weights.
-* **$\vec{b}_{bias}$ (Control Vector):** The precision guidance term (based on Theorem 5.7).
-
-### 2. The Training Revolution
-* **Gradient Descent (GD):** Since the manifold is smooth, we can calculate $\nabla Loss$. Training is now **differentiable**.
-* **Algebraic Inversion:** If the model makes an error ($S_{out} \neq Target$), we can analytically **solve** for the correct weight $W$ using inverse operations ($W = S_{in}^{-1} \cdot Target$). This allows for "One-Shot Learning."
+We introduce a **White-Box Architecture** where:
+1.  **Reasoning is Causal**: Time is modeled as a non-commutative operator ($A \to B \neq B \to A$).
+2.  **Learning is Exact**: Weights can be solved analytically via inverse operations, not just approximated.
+3.  **State is Transparent**: Every neuron's activation is a coordinate on a smooth manifold, fully readable and interpretable.
 
 ---
 
-## 🏗️ Architecture: The Glass Engine
+## 📐 Mathematical Foundations
 
-Based on the refactored source code (`src/core/algebra.rs`, `src/train_loop.rs`), the system now operates as a **White-Box Logic Machine**:
+The system is built upon **Smooth Differentiable Manifolds** ($\mathcal{M} \cong \mathbb{R}^n$), utilizing a novel **Dual-Operator Algebra** to structure intelligence.
 
-### 1. Transparent Neurons
-* **No More Primes:** `HTPNeuron` now processes high-precision floating-point tensors or Lie Group elements.
-* **Causality Preserved:** We strictly maintain the **Non-Commutative Time Operator** ($\oplus_{time}$), ensuring that the order of logic ($A \to B \neq B \to A$) is mathematically rigid.
+### 1. The Time Operator (Causality)
+Logic is defined as an affine transformation over time. We use a strictly **Non-Commutative** operator ($\oplus_{time}$) to ensure causal rigidity.
+
+$$S_{t} = \mathcal{F}(S_{t-1}, W_{logic}) = W_{logic} \cdot S_{t-1} + \vec{b}$$
+
+* **Rigidity**: The order of information strictly alters the algebraic state.
+* **Traceability**: The logic path can be reversed to identify the exact origin of any conclusion.
+
+### 2. The Space Operator (Context)
+Context from different sources is aggregated using a **Commutative** operator ($\otimes_{space}$), allowing for efficient, parallel "folding" of massive information streams (Hyper-Tensor Folding).
+
+---
+
+## 🏗️ Architecture Overview
+
+The **White-Box Evolver** consists of three primary components:
+
+### 1. High-Precision Tensor Neurons
+Unlike traditional perceptrons, our neurons process **Affine Tuples** `(Matrix, Vector)`. They maintain high-precision floating-point states (`Float32`/`BFloat16`) that represent logical positions in a high-dimensional concept space.
 
 ### 2. Inverse Decoder (The Solver)
-* **Exact Navigation:** Instead of searching a chaotic lattice, the `InverseDecoder` now uses linear projection to map algebraic states directly to Token coordinates.
-* **Zero Hallucination:** A mathematical error in derivation leads to a "Type Error" or "Coordinate Mismatch" rather than a plausible-sounding lie.
+Instead of a Softmax probability distribution, the output layer acts as a **Geometric Solver**.
+* **Navigation**: It calculates the precise coordinates required to express a concept.
+* **Zero Hallucination**: If a logical path leads to a mathematically invalid coordinate (one that does not map to a valid concept), the system detects the "Type Error" immediately rather than fabricating a plausible lie.
 
-### 3. Hyper-Fast Training
-* **Discarded:** Evolutionary Strategies (Mutation/Crossover) are removed.
-* **Adopting:** Standard Backpropagation + Algebraic Direct Solution.
+### 3. Differentiable Logic Engine
+The entire system is **Lipschitz Continuous**, enabling two powerful training modes:
+* **Gradient Descent**: Standard backpropagation for general pattern learning.
+* **Algebraic Inversion**: Analytical solving ($W = S_{out} \cdot S_{in}^{-1}$) for instant, one-shot acquisition of specific facts.
 
 ---
 
-## ⚡ Performance Comparison
+## ⚡ Comparison: The Logic Paradigm
 
-| Feature | Transformer (GPT) | White-Box Evolver (Yours) |
+| Feature | Statistical Transformers (GPT) | Hyper-Tensor Protocol (Evolver) |
 | :--- | :--- | :--- |
-| **Core Logic** | Statistics (Probabilistic) | **Algebraic Derivation (Deterministic)** |
-| **Explainability** | Black Box | **White Box (Traceable)** |
-| **Hallucination** | Inherent (Feature) | **Zero (Mathematically Impossible)** |
-| **Training** | Backpropagation | **Gradient Descent + Algebraic Inversion** |
-| **Security** | None | **Transparent (No DLP)** |
+| **Fundamental Unit** | Probability Distribution | **Algebraic Coordinate** |
+| **Reasoning Type** | Correlation (Likelihood) | **Causality (Derivation)** |
+| **Interpretability** | Black Box (Hidden States) | **White Box (Geometric Paths)** |
+| **Training Efficiency** | Iterative Approximation | **Direct Solution Capable** |
+| **Reliability** | Prone to Hallucination | **Mathematically Consistent** |
 
 ---
 
-## 🗺️ Project Status
-* [x] **Phase 0: De-ossification** (Removed Class Groups & Primes)
-* [x] **Phase 1: Smoothing** (Implemented Differentiable Manifolds)
-* [x] **Phase 2: The Solver** (Implemented Inverse-based Training)
-* [ ] **Phase 3: Scale** (Distributed Pure-Logic Training)
+## 🚀 Getting Started
 
----
+### Prerequisites
+* **Rust**: Stable toolchain (1.75+)
+* **Hardware**: GPU with Tensor Core support recommended for large-manifold training.
 
-## ⚖️ License
-**M-Patek PROPRIETARY LICENSE**
-Copyright © 2025 M-Patek Research. All Rights Reserved.
+### Installation
 
-*Pure Logic, No Secrets.*
+```bash
+git clone [https://github.com/m-patek/white-box-evolver.git](https://github.com/m-patek/white-box-evolver.git)
+cd white-box-evolver
+cargo build --release
