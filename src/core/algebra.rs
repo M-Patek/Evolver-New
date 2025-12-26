@@ -7,14 +7,10 @@ use serde::{Serialize, Deserialize};
 // ==================================================================
 
 /// 🎯 Precision Selection
-/// - Training: f32 (Standard Backpropagation)
-/// - High-Fidelity Logic: f64
-/// 在 White-Box Evolver 中，默认使用 f32 以适配 GPU 张量核心。
 pub type Float = f32;
 
 /// 📏 Manifold Dimension (D)
-/// 逻辑流形的维度。必须与 SPECIFICATION.md 中的定义一致。
-/// 为了简化演示，这里硬编码为 512，实际工程中可能是泛型或配置项。
+/// 逻辑流形的维度。
 pub const MANIFOLD_DIM: usize = 512;
 
 /// 🏛️ Vector: 逻辑流形上的点或位移向量
@@ -41,7 +37,7 @@ impl Vector {
     /// 创建新向量 (需要检查维度)
     pub fn new(data: Vec<Float>) -> Self {
         if data.len() != MANIFOLD_DIM {
-            // 在严格模式下应该 panic 或返回 Result，这里为了简洁保持 lenient
+            // 在严格模式下应该 panic 或返回 Result
             eprintln!("⚠️ Warning: Vector dimension mismatch. Expected {}, got {}", MANIFOLD_DIM, data.len());
         }
         Vector { data }
@@ -50,6 +46,20 @@ impl Vector {
     /// 零向量 (Origin)
     pub fn zeros() -> Self {
         Vector { data: vec![0.0; MANIFOLD_DIM] }
+    }
+
+    /// 向量 L2 范数
+    pub fn norm(&self) -> Float {
+        self.data.iter().map(|x| x * x).sum::<Float>().sqrt()
+    }
+
+    /// 归一化向量
+    pub fn normalize(&self) -> Self {
+        let n = self.norm();
+        if n < 1e-9 {
+            return self.clone();
+        }
+        self.scale(1.0 / n)
     }
 
     /// 向量加法: $v + u$
@@ -106,8 +116,6 @@ impl Matrix {
     }
 
     /// 矩阵乘法 (Matrix Multiplication): $C = A \cdot B$
-    /// 注意：这是非交换操作的核心 (A*B != B*A)
-    /// (Naive implementation O(N^3), production should use BLAS/Gemm)
     pub fn matmul(&self, other: &Self) -> Self {
         assert_eq!(self.cols, other.rows, "Matrix dimension mismatch for multiplication");
         let n = self.rows;
@@ -116,11 +124,10 @@ impl Matrix {
         
         let mut result = vec![0.0; n * p];
         
-        // 简单的三重循环实现
+        // Naive implementation O(N^3)
         for i in 0..n {
             for k in 0..m {
                 let r = self.data[i * m + k];
-                // 优化：跳过 0 元素
                 if r.abs() > 1e-9 {
                     for j in 0..p {
                         result[i * p + j] += r * other.data[k * p + j];
@@ -148,6 +155,23 @@ impl Matrix {
         Vector { data: result }
     }
 
+    /// 转置矩阵-向量乘法: $y = A^T \cdot x$
+    /// 用于 Power Iteration
+    pub fn transpose_matmul_vec(&self, vec: &Vector) -> Vector {
+        assert_eq!(self.rows, vec.data.len(), "Matrix-Vector dimension mismatch for transpose");
+        let mut result = vec![0.0; self.cols];
+
+        for i in 0..self.rows {
+            let val = vec.data[i];
+            if val.abs() > 1e-9 {
+                for j in 0..self.cols {
+                    result[j] += self.data[i * self.cols + j] * val;
+                }
+            }
+        }
+        Vector { data: result }
+    }
+
     /// 矩阵加法 (Matrix Addition): $A + B$
     pub fn add(&self, other: &Self) -> Self {
         assert_eq!(self.data.len(), other.data.len(), "Matrix addition shape mismatch");
@@ -166,13 +190,37 @@ impl Matrix {
         Matrix { rows: self.rows, cols: self.cols, data: new_data }
     }
 
-    /// 🛡️ [Safety Check]: Spectral Norm Calculation
-    /// 用于验证 Lipschitz 连续性。为了性能，这里使用 Frobenius Norm 作为上界近似。
-    /// $\|A\|_F = \sqrt{\sum a_{ij}^2} \ge \|A\|_2$
-    pub fn spectral_norm(&self) -> Float {
+    /// 📊 Frobenius Norm (原 spectral_norm)
+    /// $\|A\|_F = \sqrt{\sum a_{ij}^2}$
+    /// 这不是 Lipschitz 常数，只是矩阵元素的能量总和。
+    /// 对于单位矩阵，此值为 sqrt(D)。
+    pub fn frobenius_norm(&self) -> Float {
         self.data.iter()
             .map(|x| x * x)
             .sum::<Float>()
             .sqrt()
+    }
+
+    /// 🛡️ Estimated Spectral Norm (Power Iteration)
+    /// 估算矩阵的最大奇异值 $\sigma_{max}$，即真实的 Lipschitz 常数。
+    /// 算法：幂迭代法 (Power Method) 作用于 $A^T A$。
+    /// Iterations: 通常 3 次即可得到对于稳定性检查足够精确的下界估计。
+    pub fn estimate_spectral_norm(&self, iterations: usize) -> Float {
+        // 1. 初始化探测向量 (Deterministically)
+        // 使用均匀分布的向量而不是随机向量，确保确定性。
+        let init_val = 1.0 / (self.cols as Float).sqrt();
+        let mut v = Vector::new(vec![init_val; self.cols]);
+
+        // 2. Power Iteration: v_k = A^T * A * v_{k-1}
+        for _ in 0..iterations {
+            let av = self.matmul_vec(&v);         // Apply A
+            let at_av = self.transpose_matmul_vec(&av); // Apply A^T
+            v = at_av.normalize();                // Re-normalize
+        }
+
+        // 3. Compute Rayleigh Quotient Approximation
+        // sigma ~ ||A v||
+        let av = self.matmul_vec(&v);
+        av.norm()
     }
 }
