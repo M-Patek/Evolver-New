@@ -2,78 +2,131 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::phase3::core::algebra::ClassGroupElement;
-    use crate::phase3::core::affine::AffineTuple;
-    use rug::Integer;
+    use crate::core::algebra::{Vector, Matrix, Float, MANIFOLD_DIM};
+    use crate::core::affine::AffineTuple;
+    use crate::core::neuron::HTPNeuron;
+    use crate::core::oracle::LogicOracle;
+    use crate::core::primes::{ConceptEmbedder, WeightInitializer};
 
-    fn setup_env() -> Integer {
-        // 使用测试判别式 (Small prime for speed)
-        // M = 1000003 (3 mod 4) -> Delta = -M = 1 mod 4
-        let m = Integer::from(1000003); 
-        let discriminant = -m;
-        discriminant
+    /// 🧪 Test 1: Causal Consistency (因果律验证)
+    /// 验证结合律: (A2 * A1) * S == A2 * (A1 * S)
+    /// 这是 "Time Folding" (时间并行折叠) 的数学基础。
+    #[test]
+    fn test_causal_associativity() {
+        println!("🧪 [Test] Causal Consistency (Associativity)...");
+
+        // 1. Init Random State
+        let s0 = ConceptEmbedder::embed_token(42);
+
+        // 2. Init Two Logic Steps (A1, A2)
+        let w1 = WeightInitializer::init_matrix(MANIFOLD_DIM, MANIFOLD_DIM, 100);
+        let b1 = WeightInitializer::init_bias(MANIFOLD_DIM);
+        let a1 = AffineTuple::new(w1, b1);
+
+        let w2 = WeightInitializer::init_matrix(MANIFOLD_DIM, MANIFOLD_DIM, 200);
+        let b2 = WeightInitializer::init_bias(MANIFOLD_DIM);
+        let a2 = AffineTuple::new(w2, b2);
+
+        // 3. Path A: Sequential Execution (S -> S1 -> S2)
+        let mut neuron_seq = HTPNeuron::new();
+        neuron_seq.state = s0.clone();
+        
+        neuron_seq.logic_gate = a1.clone();
+        let s1 = neuron_seq.absorb(&s0); // S1 = A1(S0)
+        
+        neuron_seq.logic_gate = a2.clone();
+        let s2_seq = neuron_seq.absorb(&s1); // S2 = A2(S1)
+
+        // 4. Path B: Folded Execution (A_total = A2 * A1, then S -> S2)
+        let a_total = a2.compose(&a1).expect("Composition Failed");
+        
+        let mut neuron_fold = HTPNeuron::new();
+        neuron_fold.state = s0.clone();
+        neuron_fold.logic_gate = a_total;
+        let s2_fold = neuron_fold.absorb(&s0); // S2 = (A2*A1)(S0)
+
+        // 5. Verify Equivalence (Error should be floating-point negligible)
+        let loss = LogicOracle::calculate_loss(&s2_seq, &s2_fold);
+        println!("   > Sequential vs Folded Loss: {:.10e}", loss);
+        
+        assert!(loss < 1e-5, "❌ Associativity Broken! Time Folding is invalid.");
     }
 
-    /// 🌊 [CRITICAL TEST]: 验证流式演化的状态恒定性
-    /// 证明系统可以处理无限长度的序列而不会发生内存/位宽爆炸
-    /// 
-    /// 理论基础：S_new = S_old^p * q
-    /// 在这一步中，p 被作为指数立即消耗，只有结果状态 S_new 被保留。
+    /// 🧪 Test 2: The Solver (代数逆解 / One-Shot Learning)
+    /// 验证我们是否能通过 Oracle 瞬间算出所需的权重修正量。
     #[test]
-    fn test_state_streaming_constant_size() {
-        let discriminant = setup_env();
-        let mut state = ClassGroupElement::identity(&discriminant);
-        
-        println!("🌊 [Test] Starting State Streaming Evolution...");
-        
-        // 记录初始状态大小
-        let initial_bits = state.a.significant_bits();
-        println!("   Initial State Size: {} bits", initial_bits);
+    fn test_algebraic_solver() {
+        println!("🧪 [Test] Algebraic One-Shot Solver...");
 
-        // 模拟 100 步演化 (如果是旧的累积模式，P因子早已爆炸)
+        // 1. Define Problem
+        // Start: "Sky"
+        // Target: "Blue"
+        let s_in = ConceptEmbedder::embed_token(1); // "Sky"
+        let s_target = ConceptEmbedder::embed_token(2); // "Blue"
+        
+        // Initial Logic: Random (Tabula Rasa)
+        let w_init = WeightInitializer::init_matrix(MANIFOLD_DIM, MANIFOLD_DIM, 777);
+        let b_init = WeightInitializer::init_bias(MANIFOLD_DIM);
+        let current_gate = AffineTuple::new(w_init, b_init);
+
+        // Check initial error
+        let mut neuron = HTPNeuron::new();
+        neuron.logic_gate = current_gate.clone();
+        let s_pred_initial = neuron.absorb(&s_in);
+        let initial_loss = LogicOracle::calculate_loss(&s_pred_initial, &s_target);
+        println!("   > Initial Loss (Random): {:.4}", initial_loss);
+
+        // 2. Invoke The Oracle (Solve for Delta W)
+        // We want to correct W such that W_new * S_in ≈ S_target
+        let delta_w = LogicOracle::compute_ideal_update(&s_in, &s_target, &current_gate);
+        
+        // 3. Apply Correction
+        // W_new = W_old + Delta W
+        let w_new = current_gate.linear.add(&delta_w);
+        neuron.logic_gate.linear = w_new;
+
+        // 4. Verify Learning
+        let s_pred_solved = neuron.absorb(&s_in);
+        let solved_loss = LogicOracle::calculate_loss(&s_pred_solved, &s_target);
+        println!("   > Solved Loss (One-Shot): {:.10e}", solved_loss);
+
+        assert!(solved_loss < 1e-4, "❌ Solver Failed! Could not derive logic analytically.");
+        assert!(solved_loss < initial_loss, "❌ Solver made things worse!");
+    }
+
+    /// 🧪 Test 3: Deep Manifold Stability (深层稳定性)
+    /// 模拟 100 层推理，检查数值是否保持稳定 (Lipschitz Check)。
+    #[test]
+    fn test_deep_stability() {
+        println!("🧪 [Test] Deep Manifold Stability (100 Layers)...");
+
+        let mut s = ConceptEmbedder::embed_token(100);
+        
+        // Use an identity-like matrix with slight noise to simulate stable logic
+        // If we used random matrices, the value would explode or vanish quickly.
+        let mut w = Matrix::identity();
+        // Add tiny noise to identity
+        w.data[0] += 0.01; 
+
+        let b = WeightInitializer::init_bias(MANIFOLD_DIM);
+        let gate = AffineTuple::new(w, b);
+        let mut neuron = HTPNeuron::new();
+        neuron.logic_gate = gate;
+
         for i in 0..100 {
-            // 模拟输入 Token (P) 和 移位 (Q)
-            let p = Integer::from(1009); 
-            let q = ClassGroupElement::generator(&discriminant); 
+            s = neuron.absorb(&s);
             
-            // Apply: S_new = S_old^p * q
-            // 关键点：这里 p 被立即消耗掉了，state 的大小应当回弹到类群元素的标准大小
-            state = state.apply_affine(&p, &q, &discriminant).unwrap();
-            
-            if i % 20 == 0 {
-                let size = state.a.significant_bits();
-                println!("   Step {}: State Size = {} bits", i, size);
-                
-                // 断言：状态大小受判别式约束，不随时间线性增长
-                // 允许一定的波动 (reduction 后的正常浮动)，但绝不能持续增长
-                assert!(size < discriminant.significant_bits() + 200, "State explosion detected!");
+            // Check for NaN / Inf
+            if let Err(e) = neuron.verify_integrity() {
+                panic!("❌ Instability detected at layer {}: {}", i, e);
             }
         }
-        println!("✅ State Streaming test passed. No explosion detected.");
-    }
-
-    /// 💥 [BOUNDARY TEST]: 验证 P-Factor 熔断机制
-    /// 试图进行超出 MAX_CHUNK_P_BITS 的累积，应触发 Panic 或 Err
-    /// 
-    /// 证伪性：这证明了系统拒绝将“无限”压缩为“有限”的尝试。
-    #[test]
-    #[should_panic(expected = "Falsified")] // 预期会捕获到包含 "Falsified" 的错误信息
-    fn test_legacy_accumulation_fuse() {
-        let discriminant = setup_env();
-        let mut accumulator = AffineTuple::identity(&discriminant);
         
-        println!("💥 [Test] Testing Legacy Accumulation Fuse...");
-
-        // 模拟恶意攻击者试图构造一个巨大的 P 因子
-        // 每次 P 增加 ~10 bits，循环 1000 次将达到 10000 bits > 8192
-        for _ in 0..1000 {
-            let p = Integer::from(1009); 
-            let q = ClassGroupElement::identity(&discriminant);
-            let op = AffineTuple { p_factor: p, q_shift: q };
-            
-            // 这里应当在某一次循环中触发 Err/Panic
-            // 因为 compose 内部有硬性的位宽检查
-            accumulator = accumulator.compose(&op, &discriminant).unwrap();
-        }
+        // Check norm
+        let norm: Float = s.data.iter().map(|x| x*x).sum::<Float>().sqrt();
+        println!("   > Final State Norm after 100 steps: {:.4}", norm);
+        
+        assert!(norm.is_finite(), "Norm is not finite");
+        // We expect some growth or shrinkage, but not explosion to Infinity
     }
 }
