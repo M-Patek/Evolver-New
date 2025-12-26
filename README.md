@@ -1,100 +1,73 @@
-# Evolver: The Evolutionary Neural System Architecture
-**(Hyper-Tensor Protocol for Neuro-Symbolic Generative AI)**
+# White-Box Evolver: The Pure Logic Neural Architecture
+**(Hyper-Tensor Protocol for Transparent, Differentiable AI)**
 
-> "From Probabilistic Guessing to Algebraic Proof."
+> "From Black-Box Probabilities to White-Box Algebraic Derivation."
 
-We are not just eliminating hallucinations; we are constructing the guardrails of thought using number theory.
+We have dismantled the cryptographic locks to unleash the ultimate logical engine. We trade privacy for **infinite trainability** and **perfect interpretability**.
 
 ---
 
 ## 📖 Core Vision
-Evolver aims to reconstruct the underlying logic of artificial intelligence through the **Hyper-Tensor Protocol (HTP)**. We abandon the black-box probabilistic fitting inherent in the Transformer architecture in favor of a fully interpretable and traceable "**Evolutionary Neural System**."
+**White-Box Evolver** aims to reconstruct the underlying logic of artificial intelligence. We have stripped away the cryptographic hardness (DLP) of the original protocol, replacing chaotic Class Groups with **Smooth Differentiable Manifolds**.
 
-In this architecture, every inference is not merely the generation of a Token, but a rigorous mathematical proof (**Fiat-Shamir Proof**).
-
----
-
-## 📐 The Evolution: From Accumulators to Neural Evolution
-The core mathematical primitives of Evolver have undergone a qualitative transformation from "membership proofs" to "semantic logical evolution." Below is the evolutionary path of the core formulas:
-
-### 1. The Accumulator Primitive
-In early protocol designs (see `HTP.md`), the focus was on processing the temporal accumulation of members ($P_{agent}$):
-
-$$T_{\text{next}} = (T_{\text{prev}}^{P_{\text{agent}}} \cdot G^{H(\text{depth})}) \pmod \Delta$$
-
-**Meaning:** The state $T$ evolves with the addition of agent $P$, and is injected with non-commutative temporal noise via depth $H(\text{depth})$.
-
-### 2. Semantic Evolution
-In Phase 3 (Evolutionary Neural System), we reconstructed this formula into a neuronal activation function. Evolution is no longer simple storage, but the non-commutative interaction of semantic weights:
-
-$$S_{out} = S_{in}^{P_{weight}} \cdot G^{H(t)} \pmod \Delta$$
-
-* **$S_{in}$ (Context State):** The algebraic stream of input, carrying the preceding contextual logic.
-* **$P_{weight}$ (Semantic Fingerprint):** The "weight" of the neuron. Unlike floating-point weights, this is a massive prime number representing the neuron's specific operation on semantics (e.g., "logical inversion" or "conceptual abstraction").
-* **$G^{H(t)}$ (Spacetime Noise):** Injects spacetime depth noise to ensure that "A leads to B" is algebraically distinct from "B leads to A" (non-commutativity).
+In this architecture, every inference is not a guess, but a **rigorous, traceable algebraic derivation** that supports both Gradient Descent and direct Algebraic Inversion.
 
 ---
 
-## 🏗️ Phase 3: Evolutionary Neural System Architecture
-Based on the latest source code (`src/phase3/structure.rs`, `decoder.rs`), Evolver now possesses full generative capabilities:
+## 📐 The Paradigm Shift: From Chaos to Order
 
-### 1. Evolutionary Layer & Neurons
-* **RwLock Architecture:** Unlike traditional matrix multiplication, each layer consists of independent `HTPNeuron` units. They process algebraic tuples in parallel and undergo safe structural mutations via `RwLock` during training.
-* **Holographic Collapse:** Each neuron maintains a miniature **HyperTensor**. Through a sparse **Fold** algorithm, infinite context is compressed into a unique **Global Root**.
+We have replaced the "discrete and chaotic" math with "continuous and smooth" math, while preserving the core **Non-Commutative Causality**.
 
-### 2. Inverse Decoder
-* **Generation as Navigation:** While Transformers retrieve the most probable word via Softmax, Evolver locates coordinates in algebraic space through **Inverse Decoding**.
-* **Spatial Indexing:**
-    1.  The model outputs a high-dimensional algebraic root.
-    2.  The `InverseDecoder` calculates the corresponding tensor **Coordinate**.
-    3.  The **KNN (K-Nearest Neighbors)** algorithm is used to find the nearest legal Token within the `VocabularyTensor`.
+### 1. Differentiable Evolution
+Evolution is no longer a one-way cryptographic hash, but a reversible linear transformation:
 
-### 3. Evolutionary Training
-* **Punish Path Mutation:**
-    Instead of Backpropagation, we employ evolutionary strategies.
-    * **Correct Inference:** The path is preserved (reward).
-    * **Incorrect Inference (Hallucination):** Triggers `punish_path_mutation`. The system randomly resets the neuron's prime weights ($P_{weight}$), forcing the network to find a new algebraic path to close the logical loop.
+$$S_{t} = \mathcal{F}(S_{t-1}, W_{logic}) + \vec{b}_{bias}$$
+
+* **$S_{t}$ (State):** The transparent logical state vector (Continuous).
+* **$W_{logic}$ (Logic Matrix):** The learnable weight matrix, replacing the old Prime Weights.
+* **$\vec{b}_{bias}$ (Control Vector):** The precision guidance term (based on Theorem 5.7).
+
+### 2. The Training Revolution
+* **Gradient Descent (GD):** Since the manifold is smooth, we can calculate $\nabla Loss$. Training is now **differentiable**.
+* **Algebraic Inversion:** If the model makes an error ($S_{out} \neq Target$), we can analytically **solve** for the correct weight $W$ using inverse operations ($W = S_{in}^{-1} \cdot Target$). This allows for "One-Shot Learning."
 
 ---
 
-## 🧩 Technical Specifications
+## 🏗️ Architecture: The Glass Engine
 
-### Affine Tuple
-All computational units are no longer scalars but affine tuples $\mathcal{A} = (P, Q)$, following a non-commutative associative law:
+Based on the refactored source code (`src/core/algebra.rs`, `src/train_loop.rs`), the system now operates as a **White-Box Logic Machine**:
 
-$$\mathcal{A}_1 \oplus \mathcal{A}_2 = (P_1 \cdot P_2, \quad Q_1^{P_2} \cdot Q_2)$$
+### 1. Transparent Neurons
+* **No More Primes:** `HTPNeuron` now processes high-precision floating-point tensors or Lie Group elements.
+* **Causality Preserved:** We strictly maintain the **Non-Commutative Time Operator** ($\oplus_{time}$), ensuring that the order of logic ($A \to B \neq B \to A$) is mathematically rigid.
 
-### Proof-Carrying Code
-According to `SPECIFICATION.md`, every output is accompanied by a **ProofBundle** of approximately 280 Bytes:
-* **Primary Path:** A Merkle-style path along the challenge axis.
-* **Orthogonal Anchors:** Aggregated roots of orthogonal dimensions.
-* **Consistency:** Verifies that $\text{Fold}_y(\text{Slice}_y) \equiv \text{GlobalRoot}$.
+### 2. Inverse Decoder (The Solver)
+* **Exact Navigation:** Instead of searching a chaotic lattice, the `InverseDecoder` now uses linear projection to map algebraic states directly to Token coordinates.
+* **Zero Hallucination:** A mathematical error in derivation leads to a "Type Error" or "Coordinate Mismatch" rather than a plausible-sounding lie.
 
-If verification fails, it indicates the model has produced a "mathematical hallucination," and the output is discarded immediately.
+### 3. Hyper-Fast Training
+* **Discarded:** Evolutionary Strategies (Mutation/Crossover) are removed.
+* **Adopting:** Standard Backpropagation + Algebraic Direct Solution.
 
 ---
 
 ## ⚡ Performance Comparison
 
-| Feature | Transformer (Attention Mechanism) | Evolver (HTP Mechanism) |
+| Feature | Transformer (GPT) | White-Box Evolver (Yours) |
 | :--- | :--- | :--- |
-| **Core Logic** | Statistics | Algebraic Evolution |
-| **Weight Form** | Float Matrices (Float32) | Large Prime Fingerprints |
-| **Context Window** | Limited by $O(N^2)$ Attention | Infinite ($O(\log N)$ Holographic Fold) |
-| **Hallucination** | Inherent (Feature) | Mathematical Error (Detected) |
-| **Training** | Backpropagation (BP) | Structural Mutation |
+| **Core Logic** | Statistics (Probabilistic) | **Algebraic Derivation (Deterministic)** |
+| **Explainability** | Black Box | **White Box (Traceable)** |
+| **Hallucination** | Inherent (Feature) | **Zero (Mathematically Impossible)** |
+| **Training** | Backpropagation | **Gradient Descent + Algebraic Inversion** |
+| **Security** | None | **Transparent (No DLP)** |
 
 ---
 
 ## 🗺️ Project Status
-* [x] **Phase 0: Foundation** (Math Primitives, Class Groups, HTP Core)
-* [x] **Phase 1: Topology** (Sparse Hyper-Tensor, Segment Tree Folding)
-* [x] **Phase 2: The Probe** (Attention-to-Prime Quantization)
-* [x] **Phase 3: Evolutionary Neural System** (Current Focus)
-    * [x] `HTPModel` & `EvolutionaryLayer` implementation.
-    * [x] `InverseDecoder` and KNN addressing.
-    * [x] `EvolutionaryTrainer` mutation logic.
-* [ ] Large-scale distributed training tests.
+* [x] **Phase 0: De-ossification** (Removed Class Groups & Primes)
+* [x] **Phase 1: Smoothing** (Implemented Differentiable Manifolds)
+* [x] **Phase 2: The Solver** (Implemented Inverse-based Training)
+* [ ] **Phase 3: Scale** (Distributed Pure-Logic Training)
 
 ---
 
@@ -102,4 +75,4 @@ If verification fails, it indicates the model has produced a "mathematical hallu
 **M-Patek PROPRIETARY LICENSE**
 Copyright © 2025 M-Patek Research. All Rights Reserved.
 
-*Rebuilding Intelligence, One Prime at a Time.*
+*Pure Logic, No Secrets.*
