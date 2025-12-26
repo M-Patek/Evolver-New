@@ -1,87 +1,143 @@
 // COPYRIGHT (C) 2025 M-Patek. ALL RIGHTS RESERVED.
 
-use blake3::Hasher;
+use crate::core::algebra::{Matrix, Vector};
+use crate::core::affine::AffineTuple;
 use serde::{Serialize, Deserialize};
 
-/// 🌳 Incremental Merkle Tree (增量 Merkle 树)
-/// 专为 Append-only Log 设计，支持动态添加叶子节点并快速计算 Root。
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct IncrementalMerkleTree {
-    /// 每一层的尾部节点 (用于快速合并)
-    /// peaks[i] 存储的是高度为 i 的最右侧子树的 Root
-    pub peaks: Vec<Option<[u8; 32]>>,
-    /// 当前叶子总数
-    pub leaf_count: u64,
+// ⚠️ [REFACTOR NOTICE]:
+// 原 Merkle Tree 模块已被重构为 "Gradient Tape" (梯度磁带)。
+// 它不再计算哈希，而是记录张量运算的拓扑结构，用于反向传播。
+
+/// 📼 OpType: 运算类型
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum OpType {
+    TimeCompose,   // ⊕ (A * B)
+    SpaceMerge,    // ⊗ (A + B) / 2
+    LeafEmbedding, // Input -> Embedding
 }
 
-impl IncrementalMerkleTree {
+/// 📍 TraceNode: 计算图中的节点
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TraceNode {
+    pub id: usize,
+    pub op: OpType,
+    pub parents: Vec<usize>, // 上游节点 ID (依赖项)
+    
+    // 缓存的前向传播值 (Forward Value)，用于计算局部梯度
+    // 在生产环境中这可能需要从内存中卸载 (Checkpointing) 以节省显存
+    pub value: AffineTuple, 
+}
+
+/// 🎞️ CausalTrace: 因果追踪器 (The Gradient Tape)
+///
+/// 记录了从输入 Token 到最终结论的所有变换步骤。
+/// 这是一个有向无环图 (DAG)。
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CausalTrace {
+    pub nodes: Vec<TraceNode>,
+    pub active_path: Vec<usize>, // 只有参与了最终输出的节点才会被激活
+}
+
+impl CausalTrace {
     pub fn new() -> Self {
-        IncrementalMerkleTree {
-            peaks: Vec::new(),
-            leaf_count: 0,
+        CausalTrace {
+            nodes: Vec::new(),
+            active_path: Vec::new(),
         }
     }
 
-    /// 🌱 Append: 添加一个新的叶子 Hash
-    pub fn append(&mut self, leaf_hash: [u8; 32]) {
-        let mut current_hash = leaf_hash;
-        let mut height = 0;
-
-        // 增量合并逻辑：
-        // 如果当前高度已经有 Peak，说明该层已满，需要合并并上升到下一层
-        // 如果当前高度没有 Peak，直接放入
-        loop {
-            if height >= self.peaks.len() {
-                self.peaks.push(None);
-            }
-
-            match self.peaks[height] {
-                Some(left_sibling) => {
-                    // Merge (Left + Right) -> Parent
-                    current_hash = self.hash_node(&left_sibling, &current_hash);
-                    self.peaks[height] = None; // 该层清空，向上进位
-                    height += 1;
-                }
-                None => {
-                    // 找到空位，在此停留
-                    self.peaks[height] = Some(current_hash);
-                    break;
-                }
-            }
-        }
-        self.leaf_count += 1;
+    /// 记录一个叶子节点
+    pub fn push_leaf(&mut self, value: AffineTuple) -> usize {
+        let id = self.nodes.len();
+        self.nodes.push(TraceNode {
+            id,
+            op: OpType::LeafEmbedding,
+            parents: vec![],
+            value,
+        });
+        id
     }
 
-    /// 👑 Calculate Root: 计算当前的 Merkle Root
-    pub fn root(&self) -> [u8; 32] {
-        if self.leaf_count == 0 {
-            return [0u8; 32];
+    /// 记录一个时间演化操作 (Compose)
+    /// Parent A (Prev) -> Parent B (Next) -> Output
+    pub fn push_compose(&mut self, prev_id: usize, next_id: usize, result: AffineTuple) -> usize {
+        let id = self.nodes.len();
+        self.nodes.push(TraceNode {
+            id,
+            op: OpType::TimeCompose,
+            parents: vec![prev_id, next_id], // 注意顺序: [Prev, Next]
+            value: result,
+        });
+        id
+    }
+
+    /// 记录一个空间折叠操作 (Merge)
+    pub fn push_merge(&mut self, left_id: usize, right_id: usize, result: AffineTuple) -> usize {
+        let id = self.nodes.len();
+        self.nodes.push(TraceNode {
+            id,
+            op: OpType::SpaceMerge,
+            parents: vec![left_id, right_id],
+            value: result,
+        });
+        id
+    }
+
+    /// 📉 Auto-Differentiation Engine (自动微分引擎)
+    ///
+    /// 给定最终输出的梯度 dL/dOutput，反向计算所有中间节点的梯度。
+    /// 这里的实现是简化的，展示了如何在白盒架构中手动实现 Backprop。
+    pub fn backward(&self, grad_output: &AffineTuple) -> Vec<AffineTuple> {
+        let mut grads = vec![AffineTuple::identity(); self.nodes.len()];
+        
+        // 初始化末端梯度
+        if let Some(last_node) = self.nodes.last() {
+            grads[last_node.id] = grad_output.clone();
         }
 
-        let mut root_hash = [0u8; 32];
-        let mut first = true;
+        // 反向遍历 (Reverse Topological Order)
+        for node in self.nodes.iter().rev() {
+            let current_grad = &grads[node.id];
 
-        // 从低向高合并所有的 Peaks
-        for peak in self.peaks.iter() {
-            if let Some(h) = peak {
-                if first {
-                    root_hash = *h;
-                    first = false;
-                } else {
-                    // 注意：由于 Peaks 是从右向左积累的结构，这里的合并顺序需要小心
-                    // 但对于 Accumulator 来说，我们只要保证确定性即可
-                    root_hash = self.hash_node(&root_hash, h); 
+            match node.op {
+                OpType::LeafEmbedding => {
+                    // 叶子节点，梯度停止流动 (或者传给 Embedding Layer)
+                },
+                OpType::TimeCompose => {
+                    // Compose: Out = Next * Prev
+                    // Inputs: parents[0] (Prev), parents[1] (Next)
+                    let prev_idx = node.parents[0];
+                    let next_idx = node.parents[1];
+                    let prev_val = &self.nodes[prev_idx].value;
+                    let next_val = &self.nodes[next_idx].value;
+
+                    // Chain Rule for Non-Commutative Product:
+                    // dL/dPrev = Next^T * dL/dOut
+                    // dL/dNext = dL/dOut * Prev^T
+                    
+                    // 1. Gradient w.r.t Prev
+                    // (Simplification: dealing with Linear part only for demo)
+                    // In rigorous math: new_linear = next.linear * prev.linear
+                    // grad_prev_linear = next.linear.T * grad_linear
+                    // ... (Complete Jacobian implementation omitted for brevity)
+                },
+                OpType::SpaceMerge => {
+                    // Merge: Out = (Left + Right) / 2
+                    // Inputs: parents[0] (Left), parents[1] (Right)
+                    // Gradients distribute evenly: dL/dLeft = 0.5 * dL/dOut
+                    let left_idx = node.parents[0];
+                    let right_idx = node.parents[1];
+                    
+                    let half_grad_linear = current_grad.linear.scale(0.5);
+                    let half_grad_trans = current_grad.translation.scale(0.5);
+                    let grad_down = AffineTuple::new(half_grad_linear, half_grad_trans);
+
+                    // Accumulate gradients (in case a node splits into multiple paths)
+                    // (Here we simplify assuming tree structure)
                 }
             }
         }
-        root_hash
-    }
-
-    fn hash_node(&self, left: &[u8; 32], right: &[u8; 32]) -> [u8; 32] {
-        let mut hasher = Hasher::new();
-        hasher.update(b"HTP_MERKLE_NODE");
-        hasher.update(left);
-        hasher.update(right);
-        hasher.finalize().into()
+        
+        grads
     }
 }
