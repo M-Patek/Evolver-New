@@ -1,104 +1,70 @@
 // COPYRIGHT (C) 2025 M-Patek. ALL RIGHTS RESERVED.
 
-use super::tensor::HyperTensor;
-use crate::phase3::core::affine::AffineTuple;
-use crate::phase3::core::algebra::ClassGroupElement;
-use rug::Integer;
-use std::collections::HashMap;
+use rayon::prelude::*;
+use crate::core::affine::AffineTuple;
 
-impl HyperTensor {
-    // [API CHANGE]: 公开的计算入口，默认使用自然序 [0, 1, 2, ...]
-    pub fn calculate_global_root(&mut self) -> Result<AffineTuple, String> {
-        // 构建自然序: [0, 1, 2, ... D-1]
-        let default_order: Vec<usize> = (0..self.dimensions).collect();
-        
-        // 注意：这里的 cached_root 应当基于新的折叠逻辑失效时清除
-        if let Some(ref root) = self.cached_root {
-             // return Ok(root.clone()); // 暂时禁用缓存以确保维度置换测试的正确性
-        }
+/// 📂 HyperFolder: 拓扑折叠器 (Topological Folder)
+///
+/// 负责将大量的逻辑单元 (AffineTuple) 通过时间或空间算子压缩成单一的“全息摘要”。
+/// 由于我们的代数算子满足结合律，我们可以利用 Rayon 实现 Log(N) 复杂度的自动并行折叠。
+pub struct HyperFolder;
 
-        let root = self.compute_root_internal(&default_order)?;
-        // self.cached_root = Some(root.clone());
-        Ok(root)
+impl HyperFolder {
+    /// ⏳ Time Folding (Sequential -> Instant)
+    /// 
+    /// 物理含义: 将时间线上的一系列连续步骤 A -> B -> C -> ... -> Z 
+    /// 压缩为一个单一的等效变换矩阵 T_total。
+    /// 
+    /// T_total = A_z * ... * A_c * A_b * A_a
+    /// 
+    /// 并行化原理: 
+    /// 虽然矩阵乘法不满足交换律 (A*B != B*A)，但满足结合律 ((A*B)*C = A*(B*C))。
+    /// 因此我们可以将长链切分为 Chunk 并行计算，最后再合并。
+    pub fn fold_timeline(timeline: &[AffineTuple]) -> Option<AffineTuple> {
+        if timeline.is_empty() { return None; }
+
+        // Rayon's reduce_with uses a tree-based reduction algorithm,
+        // which naturally fits the associativity requirement.
+        let result = timeline.par_iter()
+            .cloned()
+            .reduce_with(|prev_step, next_step| {
+                // ⚠️ Crucial: Maintain Causal Order
+                // compose(prev) means: new_matrix = self * prev
+                // So we want: next_step.compose(&prev_step)
+                next_step.compose(&prev_step).expect("Time Folding Error: Lipschitz bound violated?")
+            });
+
+        result
     }
 
-    // [API CHANGE]: 内部计算现在支持“维度置换”
-    pub fn compute_root_internal(&self, dim_order: &[usize]) -> Result<AffineTuple, String> {
-        // [Phase 1]: Micro-Fold (Time Aggregation - Non-Commutative)
-        let flat_data = self.reconstruct_spatial_snapshot()?;
+    /// 🌌 Space Folding (Parallel -> Unified)
+    /// 
+    /// 物理含义: 将多个独立的上下文分支 (Branches) 融合为一个统一的上下文。
+    /// 类似于 Transformer 中的 Multi-Head Attention 的结果聚合，但这里是几何融合。
+    /// 
+    /// 算法: Tree Reduction using Commutative Merge (Average/Normalize).
+    pub fn fold_context(branches: &[AffineTuple]) -> Option<AffineTuple> {
+        if branches.is_empty() { return None; }
 
-        // [Phase 2]: Macro-Fold (Spatial Aggregation - Commutative)
-        // 从深度 0 开始递归，依照 dim_order 指定的顺序
-        let root = self.fold_sparse(0, dim_order, &flat_data)?;
-        Ok(root)
+        // 由于 commutative_merge 实现为 (A+B)/2，
+        // 树状归约 (Tree Reduction) 能够保证所有分支的权重相对均衡。
+        // Rayon 默认使用树状归约。
+        let result = branches.par_iter()
+            .cloned()
+            .reduce_with(|branch_a, branch_b| {
+                branch_a.commutative_merge(&branch_b).expect("Space Folding Error")
+            });
+
+        result
     }
-
-    /// 🛠️ 从时间线重建空间快照
-    fn reconstruct_spatial_snapshot(&self) -> Result<HashMap<Vec<usize>, AffineTuple>, String> {
-        let mut snapshot = HashMap::new();
-        let one = Integer::from(1);
-        let identity_q = ClassGroupElement::identity(&self.discriminant);
-
-        for (coord, time_tree) in &self.data {
-            // [Time Collapse]: 这一步体现了因果律 (非交换)
-            let cell_time_root = time_tree.root(&self.discriminant)?;
-
-            // [Sparse Optimization]
-            if cell_time_root.p_factor != one {
-                snapshot.insert(coord.clone(), cell_time_root);
-            } else {
-                if cell_time_root.q_shift != identity_q {
-                     snapshot.insert(coord.clone(), cell_time_root);
-                }
-            }
-        }
-        Ok(snapshot)
-    }
-
-    // 核心算法：支持维度置换的稀疏折叠
-    fn fold_sparse(
-        &self,
-        depth: usize, // 当前递归深度 (0..D)
-        dim_order: &[usize], // 维度折叠顺序
-        relevant_data: &HashMap<Vec<usize>, AffineTuple>
-    ) -> Result<AffineTuple, String> {
-        if relevant_data.is_empty() {
-             return Ok(AffineTuple::identity(&self.discriminant));
-        }
-
-        if depth == self.dimensions {
-             return Ok(AffineTuple::identity(&self.discriminant));
-        }
-
-        // [CRITICAL CHANGE]: 获取当前层需要折叠的“物理维度”
-        // 这允许了 Fold(X->Y) 和 Fold(Y->X) 的自由切换
-        let target_dim = dim_order[depth];
-
-        // Grouping: 按 target_dim 的坐标值分组
-        let mut groups: HashMap<usize, HashMap<Vec<usize>, AffineTuple>> = HashMap::new();
-        for (coord, tuple) in relevant_data {
-            if target_dim >= coord.len() { continue; }
-            let idx = coord[target_dim];
-            groups.entry(idx)
-                .or_insert_with(HashMap::new)
-                .insert(coord.clone(), tuple.clone());
-        }
-
-        let mut layer_agg = AffineTuple::identity(&self.discriminant);
-        let mut sorted_indices: Vec<usize> = groups.keys().cloned().collect();
-        sorted_indices.sort(); 
-
-        for idx in sorted_indices {
-            let sub_map = groups.get(&idx).unwrap();
-            
-            // Recurse: 深度 +1
-            let sub_result = self.fold_sparse(depth + 1, dim_order, sub_map)?;
-            
-            // [BOUNDARY CHECK]: 必须使用 commutative_merge
-            // 只有阿贝尔群的聚合才能保证 Fold(Order_A) == Fold(Order_B)
-            layer_agg = layer_agg.commutative_merge(&sub_result, &self.discriminant)?;
-        }
-
-        Ok(layer_agg)
+    
+    /// 🧱 Layer Folding (Deep Stacking)
+    /// 
+    /// 用于将上一层的输出折叠为下一层的输入。
+    /// (简单的 wrapper，但在深度网络拓扑中有语义价值)
+    pub fn fold_layers(layer_outputs: &[AffineTuple]) -> Option<AffineTuple> {
+        // Layers imply sequence (Bottom -> Up), so we use Time Folding logic
+        // strictly speaking, layer composition is functional composition.
+        Self::fold_timeline(layer_outputs)
     }
 }
