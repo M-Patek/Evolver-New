@@ -1,110 +1,105 @@
-# Hyper-Tensor Protocol: The Pure Logic Neural Architecture
-> "From Probabilistic Guessing to Algebraic Derivation."
+# Evolver: The Evolutionary Neural System Architecture
+**(Hyper-Tensor Protocol for Neuro-Symbolic Generative AI)**
 
-**Evolver** is a next-generation AI architecture designed to solve the fundamental limitations of statistical models. By replacing black-box probabilities with rigorous **Non-Commutative Algebra** on differentiable manifolds, it creates a neural system where every inference is a traceable, mathematical derivation.
+> "From Probabilistic Guessing to Algebraic Proof."
 
----
-
-## 🌌 Core Philosophy
-Current Large Language Models (LLMs) operate on **Statistics**: they predict the next token based on what is likely.  
-**Hyper-Tensor Protocol** operates on **Logic**: it derives the next state based on what is algebraically necessary.
-
-We introduce a **White-Box Architecture** where:
-* **Reasoning is Causal**: Time is modeled as a non-commutative operator ($A \to B \neq B \to A$).
-* **Learning is Bounded**: Weights are updated via adaptive regularization, ensuring global Lipschitz continuity.
-* **State is Transparent**: Every neuron's activation is a coordinate on a smooth manifold, fully readable and interpretable.
+We are not just eliminating hallucinations; we are constructing the guardrails of thought using number theory.
 
 ---
 
-## 📐 Mathematical Foundations
-The system is built upon **Smooth Differentiable Manifolds** ($\mathcal{M} \cong \mathbb{R}^n$), utilizing a novel **Dual-Operator Algebra** to structure intelligence.
+## 📖 Core Vision
+Evolver aims to reconstruct the underlying logic of artificial intelligence through the **Hyper-Tensor Protocol (HTP)**. We abandon the black-box probabilistic fitting inherent in the Transformer architecture in favor of a fully interpretable and traceable "**Evolutionary Neural System**."
 
-### 1. The Time Operator (Causality)
-Logic is defined as an affine transformation over time. We use a strictly **Non-Commutative operator** ($\oplus_{time}$) to ensure causal rigidity.
-
-$$S_{t} = \mathcal{F}(S_{t-1}, W_{logic}) = W_{logic} \cdot S_{t-1} + \vec{b}$$
-
-* **Rigidity**: The order of information strictly alters the algebraic state.
-* **Traceability**: The logic path can be reversed to identify the exact origin of any conclusion.
-
-### 2. The Space Operator (Context)
-Context from different sources is aggregated using a **Commutative Monoid operator** ($\otimes_{space}$), allowing for efficient, parallel "folding" of massive information streams (Hyper-Tensor Folding).
-
-We utilize a **Sum-then-Normalize** topology to ensure mathematical consistency across parallel threads:
-
-$$S_{merged} = \frac{1}{N} \sum_{i=1}^{N} S_i$$
+In this architecture, every inference is not merely the generation of a Token, but a rigorous mathematical proof (**Fiat-Shamir Proof**).
 
 ---
 
-## 🏗️ Architecture Overview
-The White-Box Evolver consists of three primary components:
+## 📐 The Evolution: From Accumulators to Neural Evolution
+The core mathematical primitives of Evolver have undergone a qualitative transformation from "membership proofs" to "semantic logical evolution." Below is the evolutionary path of the core formulas:
 
-### 1. High-Precision Tensor Neurons
-Unlike traditional perceptrons, our neurons process **Affine Tuples (Matrix, Vector)**. They maintain high-precision floating-point states (Float32/BFloat16) that represent logical positions in a high-dimensional concept space.
+### 1. The Accumulator Primitive
+In early protocol designs (see `HTP.md`), the focus was on processing the temporal accumulation of members ($P_{agent}$):
 
-### 2. Adaptive Logic Engine (The Solver)
-Instead of a Softmax probability distribution, the output layer acts as a **Regularized Geometric Solver**.
-* **Navigation**: It calculates the precise coordinates required to express a concept.
-* **Adaptive Learning**: It employs **Damped Least Squares** ($\Delta W \approx \frac{E \cdot S^T}{\|S\|^2 + \lambda}$) to switch seamlessly between One-Shot Learning (high signal) and Gradient Descent (low signal).
+$$T_{\text{next}} = (T_{\text{prev}}^{P_{\text{agent}}} \cdot G^{H(\text{depth})}) \pmod \Delta$$
 
-### 3. Zero-Hallucination Protocol
-The entire system is **Lipschitz Continuous**. If a logical path leads to a mathematically invalid coordinate (one that does not map to a valid concept within error bounds), the system detects the "Type Error" immediately rather than fabricating a plausible lie.
+**Meaning:** The state $T$ evolves with the addition of agent $P$, and is injected with non-commutative temporal noise via depth $H(\text{depth})$.
+
+### 2. Semantic Evolution
+In Phase 3 (Evolutionary Neural System), we reconstructed this formula into a neuronal activation function. Evolution is no longer simple storage, but the non-commutative interaction of semantic weights:
+
+$$S_{out} = S_{in}^{P_{weight}} \cdot G^{H(t)} \pmod \Delta$$
+
+* **$S_{in}$ (Context State):** The algebraic stream of input, carrying the preceding contextual logic.
+* **$P_{weight}$ (Semantic Fingerprint):** The "weight" of the neuron. Unlike floating-point weights, this is a massive prime number representing the neuron's specific operation on semantics (e.g., "logical inversion" or "conceptual abstraction").
+* **$G^{H(t)}$ (Spacetime Noise):** Injects spacetime depth noise to ensure that "A leads to B" is algebraically distinct from "B leads to A" (non-commutativity).
 
 ---
 
-## ⚡ Comparison: The Logic Paradigm
+## 🏗️ Phase 3: Evolutionary Neural System Architecture
+Based on the latest source code (`src/phase3/structure.rs`, `decoder.rs`), Evolver now possesses full generative capabilities:
 
-| Feature | Statistical Transformers (GPT) | Hyper-Tensor Protocol (Evolver) |
+### 1. Evolutionary Layer & Neurons
+* **RwLock Architecture:** Unlike traditional matrix multiplication, each layer consists of independent `HTPNeuron` units. They process algebraic tuples in parallel and undergo safe structural mutations via `RwLock` during training.
+* **Holographic Collapse:** Each neuron maintains a miniature **HyperTensor**. Through a sparse **Fold** algorithm, infinite context is compressed into a unique **Global Root**.
+
+### 2. Inverse Decoder
+* **Generation as Navigation:** While Transformers retrieve the most probable word via Softmax, Evolver locates coordinates in algebraic space through **Inverse Decoding**.
+* **Spatial Indexing:**
+    1.  The model outputs a high-dimensional algebraic root.
+    2.  The `InverseDecoder` calculates the corresponding tensor **Coordinate**.
+    3.  The **KNN (K-Nearest Neighbors)** algorithm is used to find the nearest legal Token within the `VocabularyTensor`.
+
+### 3. Evolutionary Training
+* **Punish Path Mutation:**
+    Instead of Backpropagation, we employ evolutionary strategies.
+    * **Correct Inference:** The path is preserved (reward).
+    * **Incorrect Inference (Hallucination):** Triggers `punish_path_mutation`. The system randomly resets the neuron's prime weights ($P_{weight}$), forcing the network to find a new algebraic path to close the logical loop.
+
+---
+
+## 🧩 Technical Specifications
+
+### Affine Tuple
+All computational units are no longer scalars but affine tuples $\mathcal{A} = (P, Q)$, following a non-commutative associative law:
+
+$$\mathcal{A}_1 \oplus \mathcal{A}_2 = (P_1 \cdot P_2, \quad Q_1^{P_2} \cdot Q_2)$$
+
+### Proof-Carrying Code
+According to `SPECIFICATION.md`, every output is accompanied by a **ProofBundle** of approximately 280 Bytes:
+* **Primary Path:** A Merkle-style path along the challenge axis.
+* **Orthogonal Anchors:** Aggregated roots of orthogonal dimensions.
+* **Consistency:** Verifies that $\text{Fold}_y(\text{Slice}_y) \equiv \text{GlobalRoot}$.
+
+If verification fails, it indicates the model has produced a "mathematical hallucination," and the output is discarded immediately.
+
+---
+
+## ⚡ Performance Comparison
+
+| Feature | Transformer (Attention Mechanism) | Evolver (HTP Mechanism) |
 | :--- | :--- | :--- |
-| **Fundamental Unit** | Probability Distribution | Algebraic Coordinate |
-| **Reasoning Type** | Correlation (Likelihood) | Causality (Derivation) |
-| **Interpretability** | Black Box (Hidden States) | White Box (Geometric Paths) |
-| **Training Efficiency** | Iterative Approximation | Adaptive Algebraic Solver |
-| **Reliability** | Prone to Hallucination | Mathematically Consistent |
+| **Core Logic** | Statistics | Algebraic Evolution |
+| **Weight Form** | Float Matrices (Float32) | Large Prime Fingerprints |
+| **Context Window** | Limited by $O(N^2)$ Attention | Infinite ($O(\log N)$ Holographic Fold) |
+| **Hallucination** | Inherent (Feature) | Mathematical Error (Detected) |
+| **Training** | Backpropagation (BP) | Structural Mutation |
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-* **Rust**: Stable toolchain (1.75+)
-* **Hardware**: GPU with Tensor Core support recommended for large-manifold training.
-
-### Installation
-```bash
-git clone [https://github.com/m-patek/white-box-evolver.git](https://github.com/m-patek/white-box-evolver.git)
-cd white-box-evolver
-cargo build --release
-```
-
-### Basic Usage
-```rust
-use evolver::prelude::*;
-
-fn main() {
-    // 1. Initialize the Manifold
-    let mut brain = HyperTensorNetwork::new(Config::default());
-
-    // 2. Derive Logic (Forward Pass)
-    let premise = tensor!("All humans are mortal");
-    let fact = tensor!("Socrates is human");
-    
-    let conclusion = brain.derive(premise, fact);
-    
-    // 3. Verify Result
-    assert_eq!(conclusion.decode(), "Socrates is mortal");
-}
-```
-
----
-
-## 🗺️ Roadmap
-* **Phase 1: Foundation**: Implementation of Differentiable Manifold kernels and Dual-Operator Algebra. (**Complete**)
-* **Phase 2: The Solver**: Implementation of Adaptive Damped Solver for stable learning. (**Complete**)
-* **Phase 3: Scale**: Distributed Hyper-Tensor Folding for infinite context windows.
+## 🗺️ Project Status
+* [x] **Phase 0: Foundation** (Math Primitives, Class Groups, HTP Core)
+* [x] **Phase 1: Topology** (Sparse Hyper-Tensor, Segment Tree Folding)
+* [x] **Phase 2: The Probe** (Attention-to-Prime Quantization)
+* [x] **Phase 3: Evolutionary Neural System** (Current Focus)
+    * [x] `HTPModel` & `EvolutionaryLayer` implementation.
+    * [x] `InverseDecoder` and KNN addressing.
+    * [x] `EvolutionaryTrainer` mutation logic.
+* [ ] Large-scale distributed training tests.
 
 ---
 
 ## ⚖️ License
-**M-Patek PROPRIETARY LICENSE** Copyright © 2025 M-Patek Research. All Rights Reserved.  
-*Pure Logic. Zero Magic.*
+**M-Patek PROPRIETARY LICENSE**
+Copyright © 2025 M-Patek Research. All Rights Reserved.
+
+*Rebuilding Intelligence, One Prime at a Time.*
